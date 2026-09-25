@@ -5,6 +5,7 @@ import { UNIVERSITIES } from "@/data/universities";
 import { buildRoadmap, gapAnalysis, rankOpportunities } from "@/lib/analysis";
 import type { Profile } from "@/lib/profile";
 import { updateState, type ChatMessage, type ChatSource, type PlatformState } from "@/lib/store";
+import Markdown from "@/components/platform/Markdown";
 import { Card, PageHeader, WithProfile, buttonClass, ghostButtonClass } from "@/components/platform/ui";
 
 const SUGGESTIONS = [
@@ -144,11 +145,11 @@ function Chat({ profile, state }: { profile: Profile; state: PlatformState }) {
             {shown.map((m, i) => (
               <div key={i} className={`max-w-[85%] ${m.role === "user" ? "ml-auto" : ""}`}>
                 <div
-                  className={`whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
-                    m.role === "user" ? "rounded-br-sm bg-blue-600 text-white" : "rounded-bl-sm border border-slate-200 bg-slate-50 text-slate-800"
+                  className={`rounded-2xl px-4 py-2.5 text-sm ${
+                    m.role === "user" ? "whitespace-pre-wrap rounded-br-sm bg-blue-600 text-white" : "rounded-bl-sm border border-slate-200 bg-slate-50 text-slate-800"
                   }`}
                 >
-                  {m.content}
+                  {m.role === "user" ? m.content : <Markdown>{m.content}</Markdown>}
                 </div>
                 {m.sources && m.sources.length > 0 && <Sources sources={m.sources} />}
               </div>

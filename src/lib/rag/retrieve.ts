@@ -76,11 +76,12 @@ export async function retrieveForMentor(question: string, student: StudentSummar
 
 function formatForPrompt(hits: SearchHit[], numbers: Map<string, number>) {
   if (!hits.length) return "В базе знаний StepByStep по этому вопросу ничего не найдено.";
+  // Явная пометка, что это чужой опыт: иначе модели иногда приписывают ученику чужие баллы и проекты.
   return hits
     .map((h) => {
       const m = h.doc.meta;
       const attrs = [
-        KIND_LABELS[h.doc.kind],
+        h.doc.kind === "experience" ? "Опыт ДРУГОГО человека, не ученика" : KIND_LABELS[h.doc.kind],
         m.university,
         m.outcome && OUTCOME_LABELS[m.outcome],
         m.year,
