@@ -224,6 +224,19 @@ function LoginForm() {
           ← Назад ко входу
         </button>
       )}
+      {mode === "signup" && (
+        <p className="mt-4 text-center text-xs text-slate-500">
+          Создавая аккаунт, ты соглашаешься с{" "}
+          <Link href="/terms" className="underline">
+            условиями
+          </Link>{" "}
+          и{" "}
+          <Link href="/privacy" className="underline">
+            политикой конфиденциальности
+          </Link>
+          .
+        </p>
+      )}
       {mode === "signup" && state?.profile && (
         <p className="mt-4 text-center text-xs text-slate-500">Анкета, которую ты уже заполнил(а), сохранится в аккаунте.</p>
       )}

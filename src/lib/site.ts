@@ -4,4 +4,6 @@ export const SITE = {
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://step-by-step-tau.vercel.app",
   telegramUrl: "", // ссылка на Telegram-канал, например https://t.me/…
   telegramSubscribers: "2 215",
+  contactEmail: "", // почта для вопросов о данных и поддержки — показывается в политике конфиденциальности
+  updatedAt: "25 сентября 2026",
 };

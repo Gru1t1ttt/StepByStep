@@ -278,7 +278,11 @@ export default function Home() {
             )}
           </nav>
         </div>
-        <div className="border-t border-slate-100 py-4 text-center text-xs text-slate-400">© {new Date().getFullYear()} StepByStep</div>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-slate-100 py-4 text-xs text-slate-400">
+          <span>© {new Date().getFullYear()} StepByStep</span>
+          <Link href="/privacy" className="hover:text-slate-700">Политика конфиденциальности</Link>
+          <Link href="/terms" className="hover:text-slate-700">Условия использования</Link>
+        </div>
       </footer>
     </>
   );
