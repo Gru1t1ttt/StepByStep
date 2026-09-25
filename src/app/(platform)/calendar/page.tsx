@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { OPPORTUNITIES } from "@/data/opportunities";
-import { UNIVERSITIES } from "@/data/universities";
 import { buildRoadmap, daysUntil, formatDate } from "@/lib/analysis";
 import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
 
@@ -17,9 +15,9 @@ function minusWeeks(iso: string, weeks: number) {
 export default function CalendarPage() {
   return (
     <WithProfile>
-      {(profile, state) => {
+      {(profile, state, catalog) => {
         const events: Event[] = [
-          ...OPPORTUNITIES.filter((o) => state.savedOpportunities.includes(o.id)).map((o) => ({
+          ...catalog.opportunities.filter((o) => state.savedOpportunities.includes(o.id)).map((o) => ({
             id: o.id,
             date: o.deadline,
             title: o.title,
@@ -27,7 +25,7 @@ export default function CalendarPage() {
             startPrep: minusWeeks(o.deadline, o.prepWeeks),
             href: "/opportunities",
           })),
-          ...UNIVERSITIES.filter((u) => state.targets.includes(u.id)).map((u) => ({
+          ...catalog.universities.filter((u) => state.targets.includes(u.id)).map((u) => ({
             id: `uni-${u.id}`,
             date: u.deadline,
             title: `Подача: ${u.name}`,
@@ -35,7 +33,7 @@ export default function CalendarPage() {
             startPrep: minusWeeks(u.deadline, 12),
             href: "/universities",
           })),
-          ...buildRoadmap(profile, state.targets)
+          ...buildRoadmap(profile, state.targets, catalog)
             .filter((s) => s.category === "Экзамен" && s.due)
             .map((s) => ({ id: s.id, date: s.due!, title: s.title, kind: "Экзамен", startPrep: minusWeeks(s.due!, 10), href: "/gap" })),
         ]

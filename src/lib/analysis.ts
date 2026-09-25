@@ -1,11 +1,14 @@
 // Правила подбора, gap analysis и карты развития. Работают без ИИ,
 // а ИИ-наставник получает их результаты как контекст и объясняет/дополняет.
 
-import { OPPORTUNITIES, type Opportunity } from "@/data/opportunities";
-import { UNIVERSITIES, type University } from "@/data/universities";
+import type { Opportunity } from "@/data/opportunities";
+import type { University } from "@/data/universities";
 import type { Profile } from "./profile";
 
 export const TODAY = new Date();
+
+// Возможности и вузы из базы (src/lib/catalog.ts).
+export type Catalog = { opportunities: Opportunity[]; universities: University[] };
 
 export function daysUntil(iso: string) {
   return Math.ceil((new Date(iso).getTime() - TODAY.getTime()) / 86_400_000);
@@ -116,8 +119,8 @@ export function matchOpportunity(p: Profile, o: Opportunity): Match {
   return { opportunity: o, score: Math.max(0, Math.min(100, score)), reasons };
 }
 
-export function rankOpportunities(p: Profile) {
-  return OPPORTUNITIES.map((o) => matchOpportunity(p, o))
+export function rankOpportunities(p: Profile, opportunities: Opportunity[]) {
+  return opportunities.map((o) => matchOpportunity(p, o))
     .filter((m) => daysUntil(m.opportunity.deadline) > 0)
     .sort((a, b) => b.score - a.score);
 }
@@ -245,8 +248,8 @@ export function universityFit(p: Profile, u: University) {
   return score;
 }
 
-export function suggestedUniversities(p: Profile) {
-  return [...UNIVERSITIES].sort((a, b) => universityFit(p, b) - universityFit(p, a));
+export function suggestedUniversities(p: Profile, universities: University[]) {
+  return [...universities].sort((a, b) => universityFit(p, b) - universityFit(p, a));
 }
 
 // ---------- Карта развития ----------
@@ -260,9 +263,9 @@ export type RoadmapStep = {
   href: string;
 };
 
-export function buildRoadmap(p: Profile, targetIds: string[]): RoadmapStep[] {
+export function buildRoadmap(p: Profile, targetIds: string[], catalog: Catalog): RoadmapStep[] {
   const steps: RoadmapStep[] = [];
-  const targets = UNIVERSITIES.filter((u) => targetIds.includes(u.id));
+  const targets = catalog.universities.filter((u) => targetIds.includes(u.id));
 
   if (!targets.length) {
     steps.push({
@@ -301,7 +304,7 @@ export function buildRoadmap(p: Profile, targetIds: string[]): RoadmapStep[] {
   const act = worst.get("activities");
   if (act) steps.push({ id: "activity", title: "Долгосрочная внеклассная активность", detail: act.row.advice, category: "Проект", href: "/portfolio" });
 
-  for (const m of rankOpportunities(p).slice(0, 4)) {
+  for (const m of rankOpportunities(p, catalog.opportunities).slice(0, 4)) {
     steps.push({
       id: `opp-${m.opportunity.id}`,
       title: m.opportunity.title,

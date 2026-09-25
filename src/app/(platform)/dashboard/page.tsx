@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { UNIVERSITIES } from "@/data/universities";
 import { buildRoadmap, daysUntil, formatDate, gapAnalysis, rankOpportunities, readiness } from "@/lib/analysis";
 import { toggleIn, updateState } from "@/lib/store";
 import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
@@ -53,12 +52,12 @@ const CATEGORY_TONE = { Экзамен: "amber", Возможность: "blue",
 export default function DashboardPage() {
   return (
     <WithProfile>
-      {(profile, state) => {
-        const roadmap = buildRoadmap(profile, state.targets);
+      {(profile, state, catalog) => {
+        const roadmap = buildRoadmap(profile, state.targets, catalog);
         const done = roadmap.filter((s) => state.doneSteps.includes(s.id)).length;
         const nextStep = roadmap.find((s) => !state.doneSteps.includes(s.id));
-        const targets = UNIVERSITIES.filter((u) => state.targets.includes(u.id));
-        const matches = rankOpportunities(profile).slice(0, 3);
+        const targets = catalog.universities.filter((u) => state.targets.includes(u.id));
+        const matches = rankOpportunities(profile, catalog.opportunities).slice(0, 3);
         const firstName = profile.fullName.split(" ")[0];
 
         return (

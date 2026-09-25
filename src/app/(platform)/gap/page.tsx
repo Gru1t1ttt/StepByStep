@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { UNIVERSITIES } from "@/data/universities";
 import { gapAnalysis, readiness, suggestedUniversities } from "@/lib/analysis";
 import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
 
@@ -17,9 +16,12 @@ export default function GapPage() {
 
   return (
     <WithProfile>
-      {(profile, state) => {
-        const options = state.targets.length ? UNIVERSITIES.filter((u) => state.targets.includes(u.id)) : suggestedUniversities(profile).slice(0, 5);
-        const uni = UNIVERSITIES.find((u) => u.id === picked) ?? options[0];
+      {(profile, state, catalog) => {
+        const options = state.targets.length
+          ? catalog.universities.filter((u) => state.targets.includes(u.id))
+          : suggestedUniversities(profile, catalog.universities).slice(0, 5);
+        const uni = catalog.universities.find((u) => u.id === picked) ?? options[0];
+        if (!uni) return <Card className="text-center text-slate-500">Каталог университетов пока пуст.</Card>;
         const rows = gapAnalysis(profile, uni);
         const r = readiness(rows);
 

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Logo from "@/components/site/Logo";
+import CatalogAdmin from "./CatalogAdmin";
 import { Badge, Card, buttonClass, ghostButtonClass } from "@/components/platform/ui";
 import { KIND_LABELS, OUTCOME_LABELS, type KnowledgeDoc, type KnowledgeKind, type Outcome } from "@/lib/rag/types";
 
@@ -16,7 +17,7 @@ type Stats = {
   approved: Record<KnowledgeKind, number>;
 };
 
-const TABS = ["Обзор", "Добавить", "Модерация", "Все документы", "Проверка поиска", "Тест качества"] as const;
+const TABS = ["Возможности", "Вузы", "Обзор", "Добавить", "Модерация", "Все документы", "Проверка поиска", "Тест качества"] as const;
 type Tab = (typeof TABS)[number];
 
 const input = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
@@ -53,7 +54,7 @@ function useApi() {
 
 export default function AdminPage() {
   const { api, token, saveToken } = useApi();
-  const [tab, setTab] = useState<Tab>("Обзор");
+  const [tab, setTab] = useState<Tab>("Возможности");
   const [docs, setDocs] = useState<Doc[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState("");
@@ -94,8 +95,8 @@ export default function AdminPage() {
         <div className="flex items-center gap-4">
           <Logo className="h-10 w-auto" />
           <div>
-            <h1 className="font-display text-xl font-bold text-slate-950">База знаний ИИ</h1>
-            <p className="text-sm text-slate-500">Опыт поступивших, гайды и факты, на которые опирается ИИ-наставник</p>
+            <h1 className="font-display text-xl font-bold text-slate-950">Админка StepByStep</h1>
+            <p className="text-sm text-slate-500">Возможности и вузы для учеников · база знаний ИИ-наставника</p>
           </div>
         </div>
         <input
@@ -123,6 +124,8 @@ export default function AdminPage() {
 
       {error && <Card className="mb-4 border-rose-200 bg-rose-50 text-sm text-rose-800">{error}</Card>}
 
+      {tab === "Возможности" && <CatalogAdmin kind="opportunities" api={api} />}
+      {tab === "Вузы" && <CatalogAdmin kind="universities" api={api} />}
       {tab === "Обзор" && <Overview stats={stats} busy={busy} run={run} api={api} />}
       {tab === "Добавить" && <AddDoc api={api} onAdded={refresh} />}
       {tab === "Модерация" && <DocList docs={pending} api={api} onChange={refresh} empty="Новых отзывов на модерации нет." />}

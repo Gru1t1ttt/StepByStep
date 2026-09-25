@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { UNIVERSITIES } from "@/data/universities";
-import { buildRoadmap, gapAnalysis, rankOpportunities } from "@/lib/analysis";
+import { buildRoadmap, gapAnalysis, rankOpportunities, type Catalog } from "@/lib/analysis";
 import type { Profile } from "@/lib/profile";
 import { updateState, type ChatMessage, type ChatSource, type PlatformState } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
@@ -17,8 +16,8 @@ const SUGGESTIONS = [
 ];
 
 // Всё, что ИИ должен знать об ученике, чтобы не начинать каждый раз с нуля.
-function buildContext(profile: Profile, state: PlatformState) {
-  const targets = UNIVERSITIES.filter((u) => state.targets.includes(u.id));
+function buildContext(profile: Profile, state: PlatformState, catalog: Catalog) {
+  const targets = catalog.universities.filter((u) => state.targets.includes(u.id));
   return {
     today: new Date().toISOString().slice(0, 10),
     profile,
@@ -28,8 +27,8 @@ function buildContext(profile: Profile, state: PlatformState) {
       deadline: u.deadline,
       gap: gapAnalysis(profile, u).map(({ label, you, need, status }) => ({ label, you, need, status })),
     })),
-    roadmap: buildRoadmap(profile, state.targets).map((s) => ({ title: s.title, due: s.due, done: state.doneSteps.includes(s.id) })),
-    topOpportunities: rankOpportunities(profile)
+    roadmap: buildRoadmap(profile, state.targets, catalog).map((s) => ({ title: s.title, due: s.due, done: state.doneSteps.includes(s.id) })),
+    topOpportunities: rankOpportunities(profile, catalog.opportunities)
       .slice(0, 6)
       .map((m) => ({ title: m.opportunity.title, type: m.opportunity.type, deadline: m.opportunity.deadline })),
     portfolio: state.portfolio.map((p) => ({ kind: p.kind, title: p.title, description: p.description })),
@@ -56,7 +55,7 @@ function Sources({ sources }: { sources: ChatSource[] }) {
   );
 }
 
-function Chat({ profile, state }: { profile: Profile; state: PlatformState }) {
+function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformState; catalog: Catalog }) {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState("");
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
@@ -83,7 +82,7 @@ function Chat({ profile, state }: { profile: Profile; state: PlatformState }) {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token && { Authorization: `Bearer ${token}` }) },
         // Источники из прошлых ответов модели не нужны — отправляем только текст.
-        body: JSON.stringify({ messages: messages.map(({ role, content }) => ({ role, content })), context: buildContext(profile, state) }),
+        body: JSON.stringify({ messages: messages.map(({ role, content }) => ({ role, content })), context: buildContext(profile, state, catalog) }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Не удалось получить ответ. Попробуй ещё раз.");
       const reader = res.body!.getReader();
@@ -180,7 +179,7 @@ function Chat({ profile, state }: { profile: Profile; state: PlatformState }) {
 export default function MentorPage() {
   return (
     <WithProfile>
-      {(profile, state) => (
+      {(profile, state, catalog) => (
         <div>
           <PageHeader
             title="ИИ-наставник"
@@ -193,7 +192,7 @@ export default function MentorPage() {
               )
             }
           />
-          <Chat profile={profile} state={state} />
+          <Chat profile={profile} state={state} catalog={catalog} />
         </div>
       )}
     </WithProfile>

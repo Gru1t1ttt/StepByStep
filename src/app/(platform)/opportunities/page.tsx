@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { OPPORTUNITIES, type OpportunityType } from "@/data/opportunities";
+import type { OpportunityType } from "@/data/opportunities";
 import { daysUntil, formatDate, matchOpportunity } from "@/lib/analysis";
 import { INTERESTS } from "@/lib/profile";
 import { toggleIn, updateState } from "@/lib/store";
 import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
 
-const TYPES = [...new Set(OPPORTUNITIES.map((o) => o.type))] as OpportunityType[];
 const selectClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 
 export default function OpportunitiesPage() {
@@ -19,8 +18,9 @@ export default function OpportunitiesPage() {
 
   return (
     <WithProfile>
-      {(profile, state) => {
-        const list = OPPORTUNITIES.map((o) => matchOpportunity(profile, o))
+      {(profile, state, catalog) => {
+        const TYPES = [...new Set(catalog.opportunities.map((o) => o.type))] as OpportunityType[];
+        const list = catalog.opportunities.map((o) => matchOpportunity(profile, o))
           .filter(({ opportunity: o }) => daysUntil(o.deadline) > 0)
           .filter(({ opportunity: o }) => !type || o.type === type)
           .filter(({ opportunity: o }) => !interest || o.interests.includes(interest))

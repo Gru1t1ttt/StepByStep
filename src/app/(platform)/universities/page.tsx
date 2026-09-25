@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { UNIVERSITIES } from "@/data/universities";
 import { formatDate, gapAnalysis, readiness, universityFit } from "@/lib/analysis";
 import { MAJORS } from "@/lib/profile";
 import { toggleIn, updateState } from "@/lib/store";
 import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
 
-const COUNTRIES = [...new Set(UNIVERSITIES.map((u) => u.country))];
 const selectClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 
 export default function UniversitiesPage() {
@@ -19,12 +17,13 @@ export default function UniversitiesPage() {
 
   return (
     <WithProfile>
-      {(profile, state) => {
-        const list = UNIVERSITIES.filter((u) => !country || u.country === country)
+      {(profile, state, catalog) => {
+        const COUNTRIES = [...new Set(catalog.universities.map((u) => u.country))].sort();
+        const list = catalog.universities.filter((u) => !country || u.country === country)
           .filter((u) => !major || u.majors.includes(major))
           .filter((u) => !grant || (grant === "full" ? u.grants === "Полный грант" : u.grants !== "Нет грантов"))
           .filter((u) => !maxTuition || u.tuitionUsd <= Number(maxTuition))
-          .filter((u) => !topOnly || u.qsRank <= Number(topOnly))
+          .filter((u) => !topOnly || (u.qsRank > 0 && u.qsRank <= Number(topOnly)))
           .sort((a, b) => universityFit(profile, b) - universityFit(profile, a));
 
         return (
@@ -78,7 +77,8 @@ export default function UniversitiesPage() {
                       <div>
                         <h3 className="font-display text-lg font-bold text-slate-950">{u.name}</h3>
                         <p className="text-sm text-slate-500">
-                          {u.country}, {u.city} · QS #{u.qsRank}
+                          {[u.country, u.city].filter(Boolean).join(", ")}
+                          {u.qsRank > 0 && ` · QS #${u.qsRank}`}
                         </p>
                       </div>
                       <div className="text-right">
