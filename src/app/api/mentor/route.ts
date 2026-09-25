@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { LLMError, streamChat, type ChatTurn } from "@/lib/llm";
 import type { Profile } from "@/lib/profile";
 import { retrieveForMentor, type StudentSummary } from "@/lib/rag/retrieve";
 
@@ -28,7 +28,7 @@ const SYSTEM = `Ты — ИИ-наставник платформы StepByStep. 
 - Отвечай на языке ученика (по умолчанию на русском), дружелюбно и по делу: несколько абзацев или список, без воды.`;
 
 type Body = {
-  messages: Anthropic.Beta.BetaMessageParam[];
+  messages: ChatTurn[];
   context: { profile?: Profile; targets?: { name: string }[] } & Record<string, unknown>;
 };
 
@@ -46,8 +46,7 @@ function studentSummary(context: Body["context"]): StudentSummary {
 }
 
 function lastUserText(messages: Body["messages"]) {
-  const last = [...messages].reverse().find((m) => m.role === "user");
-  return typeof last?.content === "string" ? last.content : "";
+  return [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 }
 
 export async function POST(req: Request) {
@@ -64,45 +63,20 @@ export async function POST(req: Request) {
     console.error("RAG retrieval failed", error);
   }
 
-  const client = new Anthropic();
   const encoder = new TextEncoder();
   const body = new ReadableStream({
     async start(controller) {
       controller.enqueue(encoder.encode(`${JSON.stringify({ sources: knowledge.sources })}\n`));
       try {
-        const stream = client.beta.messages.stream({
-          model: "claude-opus-5",
-          max_tokens: 64000,
-          betas: ["server-side-fallback-2026-07-01"],
-          fallbacks: "default",
-          thinking: { type: "adaptive" },
-          output_config: { effort: "medium" },
-          system: [
-            { type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } },
-            { type: "text", text: `Контекст ученика (JSON):\n${JSON.stringify(context)}` },
-            { type: "text", text: `<knowledge>\n${knowledge.context}\n</knowledge>` },
-          ],
-          messages: messages.slice(-30),
+        const stream = streamChat({
+          system: SYSTEM,
+          context: `Контекст ученика (JSON):\n${JSON.stringify(context)}\n\n<knowledge>\n${knowledge.context}\n</knowledge>`,
+          messages: messages.slice(-30).map(({ role, content }) => ({ role, content })),
         });
-
-        for await (const event of stream) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-            controller.enqueue(encoder.encode(event.delta.text));
-          }
-        }
-
-        const final = await stream.finalMessage();
-        if (final.stop_reason === "refusal") {
-          controller.enqueue(encoder.encode("\n\nНа этот вопрос я ответить не могу. Попробуй переформулировать."));
-        }
+        for await (const text of stream) controller.enqueue(encoder.encode(text));
       } catch (error) {
-        let message = "Не удалось получить ответ ИИ. Попробуй ещё раз чуть позже.";
-        if (error instanceof Anthropic.AuthenticationError || (error instanceof Error && /auth|api key|apiKey/i.test(error.message))) {
-          message = "ИИ-наставник ещё не подключён: на сервере не задан ключ ANTHROPIC_API_KEY.";
-        } else if (error instanceof Anthropic.RateLimitError) {
-          message = "Слишком много запросов. Подожди минуту и попробуй снова.";
-        }
-        controller.enqueue(encoder.encode(message));
+        if (!(error instanceof LLMError)) console.error("LLM request failed", error);
+        controller.enqueue(encoder.encode(error instanceof LLMError ? error.message : "Не удалось получить ответ ИИ. Попробуй ещё раз чуть позже."));
       } finally {
         controller.close();
       }
