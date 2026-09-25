@@ -3,7 +3,7 @@ import Header from "@/components/site/Header";
 import OnboardingForm from "@/components/onboarding/OnboardingForm";
 
 export const metadata: Metadata = {
-  title: "Расскажи о себе — StepByStep",
+  title: "Расскажи о себе",
 };
 
 export default function OnboardingPage() {

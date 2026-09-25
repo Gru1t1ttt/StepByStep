@@ -1,3 +1,5 @@
+import { getRequestUser } from "@/lib/auth-server";
+import { DB_URL, sql } from "@/lib/db";
 import { LLMError, streamChat, type ChatTurn } from "@/lib/llm";
 import type { Profile } from "@/lib/profile";
 import { retrieveForMentor, type StudentSummary } from "@/lib/rag/retrieve";
@@ -51,10 +53,23 @@ function lastUserText(messages: Body["messages"]) {
   return [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 }
 
+// Сколько сообщений наставнику в день можно одному пользователю (защита бюджета на ИИ).
+const DAILY_LIMIT = Number(process.env.MENTOR_DAILY_LIMIT) || 30;
+
 export async function POST(req: Request) {
+  const who = await getRequestUser(req);
+  if (!who) return Response.json({ error: "Войди в аккаунт, чтобы пользоваться наставником." }, { status: 401 });
+
   const { messages, context } = (await req.json()) as Body;
   if (!Array.isArray(messages) || messages.length === 0) {
     return Response.json({ error: "Пустой запрос" }, { status: 400 });
+  }
+
+  if ("user" in who && DB_URL) {
+    const [{ count }] = await sql()<{ count: number }[]>`select public.bump_mentor_usage(${who.user.id}) as count`;
+    if (count > DAILY_LIMIT) {
+      return Response.json({ error: `Лимит на сегодня — ${DAILY_LIMIT} сообщений наставнику. Возвращайся завтра!` }, { status: 429 });
+    }
   }
 
   // Поиск в базе не должен ломать чат: если он упал, отвечаем без базы.

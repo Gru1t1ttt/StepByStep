@@ -5,6 +5,7 @@ import { UNIVERSITIES } from "@/data/universities";
 import { buildRoadmap, gapAnalysis, rankOpportunities } from "@/lib/analysis";
 import type { Profile } from "@/lib/profile";
 import { updateState, type ChatMessage, type ChatSource, type PlatformState } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 import Markdown from "@/components/platform/Markdown";
 import { Card, PageHeader, WithProfile, buttonClass, ghostButtonClass } from "@/components/platform/ui";
 
@@ -77,12 +78,14 @@ function Chat({ profile, state }: { profile: Profile; state: PlatformState }) {
     let answer = "";
     let sources: ChatSource[] = [];
     try {
+      const token = (await supabase()?.auth.getSession())?.data.session?.access_token;
       const res = await fetch("/api/mentor", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token && { Authorization: `Bearer ${token}` }) },
         // Источники из прошлых ответов модели не нужны — отправляем только текст.
         body: JSON.stringify({ messages: messages.map(({ role, content }) => ({ role, content })), context: buildContext(profile, state) }),
       });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Не удалось получить ответ. Попробуй ещё раз.");
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let raw = "";
@@ -105,8 +108,8 @@ function Chat({ profile, state }: { profile: Profile; state: PlatformState }) {
         answer = raw;
         setStreaming(answer);
       }
-    } catch {
-      answer = "Нет соединения с сервером. Проверь интернет и попробуй снова.";
+    } catch (error) {
+      answer = error instanceof TypeError ? "Нет соединения с сервером. Проверь интернет и попробуй снова." : (error as Error).message;
     }
     // Показываем только те источники, на которые ИИ действительно сослался.
     const cited = sources.filter((src) => answer.includes(`[${src.n}]`));
@@ -124,7 +127,7 @@ function Chat({ profile, state }: { profile: Profile; state: PlatformState }) {
   const shown: ChatMessage[] = streaming ? [...history, { role: "assistant", content: streaming, sources: streamingSources.filter((src) => streaming.includes(`[${src.n}]`)) }] : history;
 
   return (
-    <div className="flex h-[calc(100vh-13rem)] min-h-[420px] flex-col">
+    <div className="flex h-[calc(100dvh-19rem)] min-h-[380px] flex-col lg:h-[calc(100vh-13rem)]">
       <Card className="flex-1 overflow-y-auto">
         {shown.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">

@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import postgres from "postgres";
+import type postgres from "postgres";
+import { DB_URL, sql } from "@/lib/db";
 import { SEED_DOCS } from "@/data/knowledge-seed";
 import { chunkDoc } from "./chunk";
 import { EMBEDDING_MODEL, embedPassages, embeddingsEnabled } from "./embeddings";
@@ -25,7 +26,6 @@ export class ReadOnlyError extends Error {
   }
 }
 
-const DB_URL = process.env.POSTGRES_URL;
 export const READ_ONLY = !DB_URL && !!process.env.VERCEL;
 
 async function buildChunks(doc: KnowledgeDoc): Promise<Chunk[]> {
@@ -49,13 +49,6 @@ function newDoc(input: DocInput, existing?: KnowledgeDoc): KnowledgeDoc {
 }
 
 // ---------------------------------------------------------------- Postgres (Supabase)
-
-let sqlClient: postgres.Sql | null = null;
-function sql() {
-  // prepare: false — пул Supabase работает в transaction mode и не поддерживает prepared statements.
-  sqlClient ??= postgres(DB_URL!, { ssl: "require", prepare: false, max: 3, idle_timeout: 20 });
-  return sqlClient;
-}
 
 type DocRow = { id: string; kind: KnowledgeKind; title: string; text: string; meta: KnowledgeMeta; status: DocStatus; created_at: Date; updated_at: Date };
 const toDoc = (r: DocRow): KnowledgeDoc => ({

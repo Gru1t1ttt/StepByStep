@@ -4,7 +4,49 @@ import Link from "next/link";
 import { UNIVERSITIES } from "@/data/universities";
 import { buildRoadmap, daysUntil, formatDate, gapAnalysis, rankOpportunities, readiness } from "@/lib/analysis";
 import { toggleIn, updateState } from "@/lib/store";
-import { Badge, Card, PageHeader, WithProfile, buttonClass } from "@/components/platform/ui";
+import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
+
+// Первые шаги нового ученика: пропадают, когда всё сделано.
+function FirstSteps({ state }: { state: { targets: string[]; savedOpportunities: string[]; chat: unknown[]; portfolio: unknown[] } }) {
+  const steps = [
+    { done: state.targets.length > 0, title: "Выбери 3–5 университетов-целей", text: "Под них построится карта развития и gap analysis.", href: "/universities" },
+    { done: state.savedOpportunities.length > 0, title: "Добавь в план 1–2 возможности", text: "Олимпиады, хакатоны, летние школы — дедлайны попадут в календарь.", href: "/opportunities" },
+    { done: state.chat.length > 0, title: "Задай вопрос ИИ-наставнику", text: "Например: «Что мне сделать на этой неделе?»", href: "/mentor" },
+    { done: state.portfolio.length > 0, title: "Начни портфолио", text: "Перенеси достижения из анкеты одним нажатием.", href: "/portfolio" },
+  ];
+  const done = steps.filter((s) => s.done).length;
+  if (done === steps.length) return null;
+  return (
+    <Card>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-lg font-bold text-slate-950">С чего начать</h2>
+        <span className="text-sm text-slate-500">
+          {done} из {steps.length}
+        </span>
+      </div>
+      <ol className="mt-4 grid gap-2 sm:grid-cols-2">
+        {steps.map((s, i) => (
+          <li key={s.href}>
+            <Link
+              href={s.href}
+              className={`flex h-full gap-3 rounded-xl border p-3 ${s.done ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200 hover:border-blue-300 hover:bg-blue-50/40"}`}
+            >
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${s.done ? "bg-emerald-500 text-white" : "bg-blue-600 text-white"}`}
+              >
+                {s.done ? "✓" : i + 1}
+              </span>
+              <span>
+                <span className={`block text-sm font-medium ${s.done ? "text-slate-500 line-through" : "text-slate-900"}`}>{s.title}</span>
+                <span className="block text-xs text-slate-500">{s.text}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </Card>
+  );
+}
 
 const CATEGORY_TONE = { Экзамен: "amber", Возможность: "blue", Проект: "green", Профиль: "slate", Подача: "rose" } as const;
 
@@ -25,6 +67,8 @@ export default function DashboardPage() {
               title={`Привет, ${firstName}!`}
               subtitle="Твоя карта развития: где ты сейчас, куда идёшь и что делать дальше."
             />
+
+            <FirstSteps state={state} />
 
             {/* Где ты / куда / что дальше */}
             <div className="grid gap-4 md:grid-cols-3">
@@ -118,9 +162,15 @@ export default function DashboardPage() {
                           <Badge tone={CATEGORY_TONE[s.category]}>{s.category}</Badge>
                         </div>
                         <p className="mt-0.5 text-sm text-slate-500">{s.detail}</p>
+                        {s.due && (
+                          <p className="mt-1 text-xs text-slate-500 sm:hidden">
+                            {formatDate(s.due)}
+                            {days !== null && days <= 30 && !isDone && <span className="ml-1 font-semibold text-rose-600">· через {days} дн.</span>}
+                          </p>
+                        )}
                       </div>
                       {s.due && (
-                        <div className="shrink-0 text-right text-xs">
+                        <div className="hidden shrink-0 text-right text-xs sm:block">
                           <p className="text-slate-500">{formatDate(s.due)}</p>
                           {days !== null && days <= 30 && !isDone && <p className="font-semibold text-rose-600">через {days} дн.</p>}
                         </div>
@@ -153,14 +203,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {!state.targets.length && (
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-950 p-5 text-white">
-                <p>Выбери университеты-цели, чтобы карта развития учитывала их требования.</p>
-                <Link href="/universities" className={buttonClass}>
-                  К университетам
-                </Link>
-              </div>
-            )}
           </div>
         );
       }}

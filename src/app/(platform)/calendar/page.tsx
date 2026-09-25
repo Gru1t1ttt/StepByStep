@@ -94,8 +94,8 @@ export default function CalendarPage() {
                     {list.map((e) => {
                       const days = daysUntil(e.date);
                       return (
-                        <Link key={e.id} href={e.href}>
-                          <Card padded={false} className="flex items-center gap-4 px-5 py-3 hover:border-blue-300">
+                        <Link key={e.id} href={e.href} className="block min-w-0">
+                          <Card padded={false} className="flex items-center gap-3 px-4 py-3 hover:border-blue-300 sm:gap-4 sm:px-5">
                             <div className={`w-14 shrink-0 rounded-lg py-1.5 text-center ${days <= 14 ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-700"}`}>
                               <p className="font-display text-lg font-bold leading-none">{new Date(e.date).getDate()}</p>
                               <p className="text-[10px] uppercase">{new Date(e.date).toLocaleDateString("ru-RU", { month: "short" })}</p>

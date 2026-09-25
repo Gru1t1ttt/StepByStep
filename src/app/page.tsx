@@ -2,6 +2,7 @@ import Link from "next/link";
 import Header from "@/components/site/Header";
 import Logo from "@/components/site/Logo";
 import PlatformTabs from "@/components/landing/PlatformTabs";
+import { SITE } from "@/lib/site";
 
 const STAIRS = ["Интересы", "Проекты", "Олимпиады", "Портфолио", "Оффер"];
 
@@ -92,7 +93,7 @@ export default function Home() {
                 href="/onboarding"
                 className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700"
               >
-                Начать бесплатно →
+                Начать →
               </Link>
               <Link
                 href="#platform"
@@ -173,11 +174,21 @@ export default function Home() {
           <div className="flex flex-col justify-between rounded-3xl bg-blue-600 p-8 text-white md:col-span-2">
             <div>
               <p className="font-mono text-xs uppercase tracking-wider text-blue-200">— Сообщество</p>
-              <p className="mt-4 font-display text-5xl font-bold">2 215</p>
+              <p className="mt-4 font-display text-5xl font-bold">{SITE.telegramSubscribers}</p>
               <p className="mt-2 text-blue-100">
                 школьников уже читают наш Telegram-канал StepByStep с возможностями для портфолио
               </p>
             </div>
+            {SITE.telegramUrl && (
+              <a
+                href={SITE.telegramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 w-fit rounded-xl bg-white px-5 py-2.5 font-semibold text-blue-700 hover:bg-blue-50"
+              >
+                Подписаться в Telegram →
+              </a>
+            )}
           </div>
         </section>
 
@@ -186,10 +197,14 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <h2 className="text-center font-display text-3xl font-bold text-slate-950 sm:text-4xl">Один тариф — всё включено</h2>
             <div className="mx-auto mt-10 max-w-lg rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
-              <p className="font-mono text-xs uppercase tracking-wider text-blue-600">Подписка</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-mono text-xs uppercase tracking-wider text-blue-600">Подписка</p>
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Сейчас бесплатно — бета</span>
+              </div>
               <p className="mt-3 font-display text-5xl font-bold text-slate-950">
                 9 990 ₸<span className="text-lg font-medium text-slate-500"> / месяц</span>
               </p>
+              <p className="mt-2 text-sm text-slate-500">Пока платформа в бета-версии, все функции открыты бесплатно.</p>
               <ul className="mt-6 grid gap-3">
                 {PRICING_FEATURES.map((f) => (
                   <li key={f} className="flex gap-3 text-slate-700">
@@ -202,9 +217,25 @@ export default function Home() {
                 href="/onboarding"
                 className="mt-8 block rounded-xl bg-blue-600 py-3 text-center font-semibold text-white hover:bg-blue-700"
               >
-                Начать
+                Попробовать бесплатно
               </Link>
             </div>
+          </div>
+        </section>
+
+        {/* Для поступивших */}
+        <section className="mx-auto max-w-6xl px-4 pt-20 sm:px-6">
+          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-slate-950 p-8 text-white sm:p-10 md:flex-row md:items-center">
+            <div className="max-w-2xl">
+              <p className="font-mono text-xs uppercase tracking-wider text-blue-400">— Для поступивших</p>
+              <h2 className="mt-3 font-display text-2xl font-bold sm:text-3xl">Уже поступил(а) за рубеж? Поделись опытом</h2>
+              <p className="mt-3 text-slate-400">
+                Честные истории — что сработало, какие были ошибки, даже отказы — помогают школьникам больше любых гайдов. ИИ-наставник StepByStep опирается именно на них.
+              </p>
+            </div>
+            <Link href="/share" className="shrink-0 rounded-xl bg-white px-6 py-3 font-semibold text-slate-950 hover:bg-slate-100">
+              Рассказать свою историю
+            </Link>
           </div>
         </section>
 
@@ -226,10 +257,28 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:px-6">
-          <Logo />
-          <p>© {new Date().getFullYear()} StepByStep</p>
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm text-slate-500 sm:grid-cols-[1fr_auto_auto] sm:px-6">
+          <div>
+            <Logo />
+            <p className="mt-3 max-w-xs">ИИ-платформа, которая ведёт школьника к поступлению в зарубежный университет — шаг за шагом.</p>
+          </div>
+          <nav className="grid content-start gap-2">
+            <p className="font-semibold text-slate-900">Платформа</p>
+            <Link href="/onboarding" className="hover:text-slate-900">Начать</Link>
+            <Link href="/login" className="hover:text-slate-900">Войти</Link>
+            <Link href="/#faq" className="hover:text-slate-900">Вопросы</Link>
+          </nav>
+          <nav className="grid content-start gap-2">
+            <p className="font-semibold text-slate-900">Сообщество</p>
+            <Link href="/share" className="hover:text-slate-900">Поделиться опытом</Link>
+            {SITE.telegramUrl && (
+              <a href={SITE.telegramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-slate-900">
+                Telegram-канал
+              </a>
+            )}
+          </nav>
         </div>
+        <div className="border-t border-slate-100 py-4 text-center text-xs text-slate-400">© {new Date().getFullYear()} StepByStep</div>
       </footer>
     </>
   );

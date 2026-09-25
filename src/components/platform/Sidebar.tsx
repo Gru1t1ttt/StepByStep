@@ -2,19 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import Logo from "@/components/site/Logo";
 import { signOut, useAuth } from "@/lib/store";
 
 export const NAV = [
-  { href: "/dashboard", label: "Карта развития", icon: "🧭" },
-  { href: "/opportunities", label: "Возможности", icon: "🎯" },
-  { href: "/universities", label: "Университеты", icon: "🎓" },
-  { href: "/gap", label: "Gap analysis", icon: "📊" },
-  { href: "/mentor", label: "ИИ-наставник", icon: "💬" },
-  { href: "/portfolio", label: "Портфолио", icon: "📁" },
-  { href: "/calendar", label: "Дедлайны", icon: "📅" },
-  { href: "/onboarding", label: "Мой профиль", icon: "👤" },
+  { href: "/dashboard", label: "Карта развития", short: "Карта", icon: "🧭" },
+  { href: "/opportunities", label: "Возможности", short: "Возможности", icon: "🎯" },
+  { href: "/universities", label: "Университеты", short: "Вузы", icon: "🎓" },
+  { href: "/mentor", label: "ИИ-наставник", short: "Наставник", icon: "💬" },
+  { href: "/gap", label: "Gap analysis", short: "Gap analysis", icon: "📊" },
+  { href: "/portfolio", label: "Портфолио", short: "Портфолио", icon: "📁" },
+  { href: "/calendar", label: "Дедлайны", short: "Дедлайны", icon: "📅" },
+  { href: "/onboarding", label: "Мой профиль", short: "Профиль", icon: "👤" },
 ];
+
+// На телефоне внизу — 4 главных раздела и «Ещё» с остальными.
+const MOBILE_MAIN = NAV.slice(0, 4);
+const MOBILE_MORE = NAV.slice(4);
 
 function Account() {
   const auth = useAuth();
@@ -63,27 +68,61 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      <div className="sticky top-0 z-30 border-b border-slate-200 bg-white lg:hidden">
-        <div className="flex items-center justify-between gap-3 px-4 py-2">
-          <Logo className="h-9 w-auto" />
-          <div className="max-w-[60%]">
-            <Account />
+      <div className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 py-2 backdrop-blur lg:hidden">
+        <Logo className="h-9 w-auto" />
+        <div className="max-w-[60%]">
+          <Account />
+        </div>
+      </div>
+      <MobileNav path={path} />
+    </>
+  );
+}
+
+function MobileNav({ path }: { path: string }) {
+  const [open, setOpen] = useState(false);
+  const moreActive = MOBILE_MORE.some((n) => n.href === path);
+  const item = (active: boolean) =>
+    `flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] ${active ? "font-semibold text-blue-700" : "text-slate-500"}`;
+
+  return (
+    <>
+      {open && (
+        <div className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden" onClick={() => setOpen(false)}>
+          <div
+            className="absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] grid gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {MOBILE_MORE.map((n) => (
+              <Link
+                key={n.href}
+                href={n.href}
+                onClick={() => setOpen(false)}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${path === n.href ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-700"}`}
+              >
+                <span aria-hidden>{n.icon}</span>
+                {n.label}
+              </Link>
+            ))}
           </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto px-2 pb-2">
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm ${
-                path === n.href ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-600"
-              }`}
-            >
-              {n.icon} {n.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      )}
+      <nav className="fixed inset-x-0 bottom-0 z-50 flex border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+        {MOBILE_MAIN.map((n) => (
+          <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className={item(path === n.href)}>
+            <span className="text-lg leading-none" aria-hidden>
+              {n.icon}
+            </span>
+            {n.short}
+          </Link>
+        ))}
+        <button type="button" onClick={() => setOpen((v) => !v)} className={item(open || moreActive)} aria-expanded={open}>
+          <span className="text-lg leading-none" aria-hidden>
+            ☰
+          </span>
+          Ещё
+        </button>
+      </nav>
     </>
   );
 }
