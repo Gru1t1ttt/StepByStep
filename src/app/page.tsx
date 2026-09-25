@@ -202,7 +202,7 @@ export default function Home() {
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Сейчас бесплатно — бета</span>
               </div>
               <p className="mt-3 font-display text-5xl font-bold text-slate-950">
-                9 990 ₸<span className="text-lg font-medium text-slate-500"> / месяц</span>
+                {SITE.price}<span className="text-lg font-medium text-slate-500"> / месяц</span>
               </p>
               <p className="mt-2 text-sm text-slate-500">Пока платформа в бета-версии, все функции открыты бесплатно.</p>
               <ul className="mt-6 grid gap-3">
