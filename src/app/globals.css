@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-unbounded);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #fbf9f4;
+  color: #0f172a;
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
