@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Profile } from "@/lib/profile";
-import { usePlatform, type PlatformState } from "@/lib/store";
+import { useAuth, usePlatform, type PlatformState } from "@/lib/store";
 
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
   return (
@@ -40,9 +40,26 @@ export const buttonClass =
 export const ghostButtonClass =
   "inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50";
 
-// Показывает страницу только когда профиль заполнен.
+// Показывает страницу только вошедшему пользователю с заполненным профилем.
 export function WithProfile({ children }: { children: (profile: Profile, state: PlatformState) => ReactNode }) {
+  const auth = useAuth();
   const state = usePlatform();
+  if (auth.status === "signed-out")
+    return (
+      <Card className="mx-auto max-w-lg p-8 text-center">
+        <p className="text-4xl">🔐</p>
+        <h2 className="mt-3 font-display text-xl font-bold text-slate-950">Войди в аккаунт</h2>
+        <p className="mt-2 text-slate-600">Профиль, план и портфолио сохраняются в аккаунте и доступны с любого устройства.</p>
+        <div className="mt-6 flex justify-center gap-2">
+          <Link href="/login" className={ghostButtonClass}>
+            Войти
+          </Link>
+          <Link href="/login?mode=signup" className={buttonClass}>
+            Создать аккаунт
+          </Link>
+        </div>
+      </Card>
+    );
   if (!state) return <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />;
   if (!state.profile)
     return (

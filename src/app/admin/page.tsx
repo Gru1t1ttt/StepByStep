@@ -7,6 +7,7 @@ import { KIND_LABELS, OUTCOME_LABELS, type KnowledgeDoc, type KnowledgeKind, typ
 
 type Doc = KnowledgeDoc & { chunkCount: number };
 type Stats = {
+  storage: "supabase" | "file" | "readonly";
   embeddingModel: string;
   needsReindex: boolean;
   docs: number;
@@ -153,11 +154,16 @@ function Overview({ stats, busy, run, api }: { stats: Stats | null; busy: string
           </Card>
         ))}
       </div>
+      <p className="text-sm text-slate-600">
+        Хранилище:{" "}
+        <b>{stats.storage === "supabase" ? "Supabase (Postgres)" : stats.storage === "file" ? "локальный файл .data/knowledge.json" : "только чтение (встроенные гайды)"}</b> · Эмбеддинги:{" "}
+        <b>{stats.embeddingModel}</b>
+      </p>
       <Card>
         <h2 className="font-semibold text-slate-900">Как это работает</h2>
         <ol className="mt-3 grid list-decimal gap-1.5 pl-5 text-sm text-slate-600">
           <li>Документ (отзыв, гайд, факт) режется на куски по 1–2 абзаца.</li>
-          <li>Каждый кусок превращается в эмбеддинг — числовой «отпечаток смысла» (модель {stats.embeddingModel}, работает локально).</li>
+          <li>Каждый кусок превращается в эмбеддинг — числовой «отпечаток смысла» (где доступна модель; иначе ищем по ключевым словам).</li>
           <li>На вопрос ученика ищутся ближайшие куски: по смыслу и по ключевым словам. Опыт поступивших ищется с учётом профиля ученика.</li>
           <li>Найденное передаётся ИИ-наставнику, и он отвечает со ссылками на источники [1], [2]…</li>
           <li>Отзывы из анкеты выпускников (/share) попадают в «Модерацию» и используются только после одобрения.</li>

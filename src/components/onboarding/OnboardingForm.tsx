@@ -22,7 +22,7 @@ import {
   type Language,
   type Profile,
 } from "@/lib/profile";
-import { updateState } from "@/lib/store";
+import { flushSave, updateState, useAuth } from "@/lib/store";
 import { Chips, Field, RepeatList, Section, Select, TextArea, TextInput } from "./fields";
 
 const STORAGE_KEY = "sbs-onboarding-draft";
@@ -47,6 +47,7 @@ export default function OnboardingForm() {
   const [loaded, setLoaded] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const router = useRouter();
+  const auth = useAuth();
 
   // Черновик хранится в браузере, чтобы ответы не пропали при перезагрузке.
   useEffect(() => {
@@ -88,7 +89,9 @@ export default function OnboardingForm() {
       try {
         localStorage.removeItem(STORAGE_KEY);
       } catch {}
-      router.push("/dashboard");
+      // Без аккаунта — сначала регистрация: анкета перенесётся в аккаунт автоматически.
+      if (auth.status === "signed-out") return router.push("/login?mode=signup&next=/dashboard");
+      flushSave().finally(() => router.push("/dashboard"));
     }
   };
 

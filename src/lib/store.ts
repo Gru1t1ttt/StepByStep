@@ -1,11 +1,16 @@
 "use client";
 
+import type { User } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
 import type { Profile } from "./profile";
+import { supabase, supabaseConfigured } from "./supabase";
 
-// Всё состояние платформы пока живёт в браузере (localStorage).
-// Когда появятся регистрация и база данных, этот модуль заменится запросами к серверу,
-// а компоненты останутся теми же.
+// Состояние платформы (профиль, цели, план, портфолио, чат).
+//
+// Компоненты читают его через usePlatform() и меняют через updateState() — синхронно,
+// из локальной копии в браузере. Если пользователь вошёл в аккаунт, изменения
+// с небольшой задержкой сохраняются в Supabase (таблица user_state), а при входе
+// с другого устройства загружаются оттуда.
 
 export type PortfolioItem = {
   id: string;
@@ -30,6 +35,7 @@ export type PlatformState = {
 };
 
 const KEY = "sbs-state";
+const SAVE_DELAY_MS = 800;
 
 const initial: PlatformState = {
   profile: null,
@@ -40,8 +46,22 @@ const initial: PlatformState = {
   chat: [],
 };
 
+// ---------------------------------------------------------------- аккаунт
+
+export type AuthState =
+  | { status: "loading" }
+  | { status: "guest" } // Supabase не настроен — работаем только в браузере
+  | { status: "signed-out" }
+  | { status: "signed-in"; user: User };
+
+let auth: AuthState = supabaseConfigured ? { status: "loading" } : { status: "guest" };
+let remoteLoaded = !supabaseConfigured;
+
+// ---------------------------------------------------------------- локальная копия
+
 let cache: PlatformState | null = null;
 const listeners = new Set<() => void>();
+const notify = () => listeners.forEach((l) => l());
 
 function read(): PlatformState {
   if (cache) return cache;
@@ -54,14 +74,92 @@ function read(): PlatformState {
   return cache!;
 }
 
-export function updateState(patch: Partial<PlatformState> | ((s: PlatformState) => Partial<PlatformState>)) {
-  const current = read();
-  const next = { ...current, ...(typeof patch === "function" ? patch(current) : patch) };
+function writeLocal(next: PlatformState) {
   cache = next;
   try {
     localStorage.setItem(KEY, JSON.stringify(next));
   } catch {}
-  listeners.forEach((l) => l());
+}
+
+// ---------------------------------------------------------------- сохранение в Supabase
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function saveRemote() {
+  const sb = supabase();
+  if (!sb || auth.status !== "signed-in") return;
+  const { error } = await sb.from("user_state").upsert({ user_id: auth.user.id, state: read(), updated_at: new Date().toISOString() });
+  if (error) console.error("Не удалось сохранить данные в аккаунт", error);
+}
+
+function scheduleSave() {
+  if (auth.status !== "signed-in" || !remoteLoaded) return;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveRemote, SAVE_DELAY_MS);
+}
+
+// Сохранить сразу, не дожидаясь задержки (например, перед переходом на другую страницу).
+export async function flushSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
+  await saveRemote();
+}
+
+async function loadRemote(user: User) {
+  const sb = supabase()!;
+  const { data, error } = await sb.from("user_state").select("state").eq("user_id", user.id).maybeSingle();
+  if (error) {
+    console.error("Не удалось загрузить данные аккаунта", error);
+  } else if (data?.state && Object.keys(data.state).length) {
+    writeLocal({ ...initial, ...(data.state as Partial<PlatformState>) });
+  } else if (read().profile) {
+    // Первый вход: переносим в аккаунт то, что заполнено до регистрации (например, анкету).
+    await saveRemote();
+  }
+  remoteLoaded = true;
+  notify();
+}
+
+let authStarted = false;
+
+// Вызывается один раз при загрузке приложения (компонент AuthSync в layout).
+export function startAuthSync() {
+  const sb = supabase();
+  if (!sb || authStarted) return;
+  authStarted = true;
+  sb.auth.onAuthStateChange((event, session) => {
+    const user = session?.user;
+    const prevId = auth.status === "signed-in" ? auth.user.id : null;
+    if (user) {
+      auth = { status: "signed-in", user };
+      if (user.id !== prevId) {
+        remoteLoaded = false;
+        notify();
+        // Запросы к Supabase нельзя делать прямо внутри этого колбэка — откладываем.
+        setTimeout(() => loadRemote(user), 0);
+        return;
+      }
+    } else {
+      if (prevId) writeLocal(initial); // выход: не оставляем чужие данные на общем устройстве
+      auth = { status: "signed-out" };
+      remoteLoaded = true;
+    }
+    notify();
+  });
+}
+
+export async function signOut() {
+  await flushSave();
+  await supabase()?.auth.signOut();
+}
+
+// ---------------------------------------------------------------- API для компонентов
+
+export function updateState(patch: Partial<PlatformState> | ((s: PlatformState) => Partial<PlatformState>)) {
+  const current = read();
+  writeLocal({ ...current, ...(typeof patch === "function" ? patch(current) : patch) });
+  notify();
+  scheduleSave();
 }
 
 function subscribe(listener: () => void) {
@@ -79,9 +177,22 @@ function subscribe(listener: () => void) {
   };
 }
 
-// На сервере состояния нет — отдаём null, и страницы показывают заглушку до гидрации.
+// null — ещё не готово (серверный рендер или загрузка данных аккаунта).
+function readReady() {
+  return remoteLoaded && auth.status !== "loading" ? read() : null;
+}
+
 export function usePlatform(): PlatformState | null {
-  return useSyncExternalStore(subscribe, read, () => null);
+  return useSyncExternalStore(subscribe, readReady, () => null);
+}
+
+const serverAuth: AuthState = { status: "loading" };
+export function useAuth(): AuthState {
+  return useSyncExternalStore(
+    subscribe,
+    () => auth,
+    () => serverAuth,
+  );
 }
 
 export function toggleIn(list: string[], id: string) {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/site/Logo";
+import { signOut, useAuth } from "@/lib/store";
 
 export const NAV = [
   { href: "/dashboard", label: "Карта развития", icon: "🧭" },
@@ -14,6 +15,22 @@ export const NAV = [
   { href: "/calendar", label: "Дедлайны", icon: "📅" },
   { href: "/onboarding", label: "Мой профиль", icon: "👤" },
 ];
+
+function Account() {
+  const auth = useAuth();
+  if (auth.status !== "signed-in") return null;
+  const name = (auth.user.user_metadata?.full_name as string | undefined) || auth.user.email;
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
+      <span className="min-w-0 truncate text-slate-700" title={auth.user.email}>
+        {name}
+      </span>
+      <button type="button" onClick={() => signOut()} className="shrink-0 text-xs font-medium text-slate-500 hover:text-rose-600">
+        Выйти
+      </button>
+    </div>
+  );
+}
 
 export default function Sidebar() {
   const path = usePathname();
@@ -38,14 +55,20 @@ export default function Sidebar() {
             );
           })}
         </nav>
-        <p className="mt-auto rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
-          Бета-версия: данные о возможностях и вузах демонстрационные.
-        </p>
+        <div className="mt-auto grid gap-3">
+          <Account />
+          <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
+            Бета-версия: данные о возможностях и вузах демонстрационные.
+          </p>
+        </div>
       </aside>
 
       <div className="sticky top-0 z-30 border-b border-slate-200 bg-white lg:hidden">
-        <div className="flex items-center px-4 py-2">
+        <div className="flex items-center justify-between gap-3 px-4 py-2">
           <Logo className="h-9 w-auto" />
+          <div className="max-w-[60%]">
+            <Account />
+          </div>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-2 pb-2">
           {NAV.map((n) => (

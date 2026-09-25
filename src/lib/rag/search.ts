@@ -13,7 +13,7 @@ const RRF_K = 60;
 export const MIN_VECTOR_SCORE = 0.8;
 // Если по смыслу чанк ниже порога, пропускаем его только при сильном совпадении слов (точные названия, цифры).
 const MIN_KEYWORD_FALLBACK = 1.5;
-// Порог для режима без векторов (Vercel).
+// Порог для чанков без векторной оценки (на Vercel или добавленных там, где нет модели).
 const MIN_KEYWORD_ONLY = 1.0;
 
 // Служебные слова не должны влиять на поиск по ключевым словам.
@@ -62,9 +62,11 @@ export async function search(query: string, { kinds, limit = 6, perDoc = 2, filt
   });
   if (!chunks.length || !query.trim()) return [];
 
-  const useVectors = embeddingsEnabled() && chunks.every((c) => c.embedding.length > 0);
+  // Векторная близость — только для чанков с эмбеддингом и только там, где есть модель
+  // (на Vercel её нет — там ищем по ключевым словам). Чанки без эмбеддинга участвуют только в BM25.
+  const useVectors = embeddingsEnabled() && chunks.some((c) => c.embedding.length > 0);
   const q = useVectors ? await embedQuery(query) : [];
-  const vector = chunks.map((c) => (useVectors ? cosine(q, c.embedding) : 0));
+  const vector = chunks.map((c) => (useVectors && c.embedding.length ? cosine(q, c.embedding) : 0));
   const keyword = bm25(query, chunks);
 
   const rank = (scores: number[]) => {
@@ -82,9 +84,11 @@ export async function search(query: string, { kinds, limit = 6, perDoc = 2, filt
       doc: docs.get(chunk.docId)!,
       vectorScore: vector[i],
       keywordScore: keyword[i],
-      score: (useVectors ? 1 / (RRF_K + vr[i]) : 0) + (keyword[i] > 0 ? 1 / (RRF_K + kr[i]) : 0),
+      score: (vector[i] > 0 ? 1 / (RRF_K + vr[i]) : 0) + (keyword[i] > 0 ? 1 / (RRF_K + kr[i]) : 0),
     }))
-    .filter((h) => (useVectors ? h.vectorScore >= MIN_VECTOR_SCORE || h.keywordScore >= MIN_KEYWORD_FALLBACK : h.keywordScore >= MIN_KEYWORD_ONLY))
+    .filter((h) =>
+      h.vectorScore > 0 ? h.vectorScore >= MIN_VECTOR_SCORE || h.keywordScore >= MIN_KEYWORD_FALLBACK : h.keywordScore >= MIN_KEYWORD_ONLY,
+    )
     .sort((a, b) => b.score - a.score);
 
   const perDocCount = new Map<string, number>();
