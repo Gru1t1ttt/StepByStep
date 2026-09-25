@@ -1,12 +1,14 @@
 "use client";
 
+import { Award, Code2, FlaskConical, HeartHandshake, Paperclip, Trophy, X, type LucideIcon } from "lucide-react";
+
 import { useState, type FormEvent } from "react";
 import { updateState, type PortfolioItem } from "@/lib/store";
 import { Badge, Card, PageHeader, WithProfile, buttonClass, ghostButtonClass } from "@/components/platform/ui";
 import type { Profile } from "@/lib/profile";
 
 const KINDS: PortfolioItem["kind"][] = ["Достижение", "Проект", "Исследование", "Сертификат", "Активность"];
-const ICONS: Record<PortfolioItem["kind"], string> = { Достижение: "🏆", Проект: "💻", Исследование: "🔬", Сертификат: "📜", Активность: "🤝" };
+const ICONS: Record<PortfolioItem["kind"], LucideIcon> = { Достижение: Trophy, Проект: Code2, Исследование: FlaskConical, Сертификат: Award, Активность: HeartHandshake };
 const input = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 
 const emptyItem = { kind: "Достижение" as PortfolioItem["kind"], title: "", description: "", link: "", date: "", fileName: "" };
@@ -112,7 +114,8 @@ export default function PortfolioPage() {
                   <input value={draft.link} onChange={(e) => setDraft({ ...draft, link: e.target.value })} placeholder="Ссылка (GitHub, сайт, публикация)" className={input} />
                   <input value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} placeholder="Когда (например, май 2026)" className={input} />
                   <label className={`${ghostButtonClass} cursor-pointer sm:col-span-2`}>
-                    {draft.fileName ? `📎 ${draft.fileName}` : "Прикрепить файл (диплом, сертификат)"}
+                    <Paperclip className="h-4 w-4" />
+                    {draft.fileName || "Прикрепить файл (диплом, сертификат)"}
                     <input type="file" className="hidden" onChange={(e) => setDraft({ ...draft, fileName: e.target.files?.[0]?.name ?? "" })} />
                   </label>
                   <div className="flex gap-2 sm:col-span-2">
@@ -134,10 +137,11 @@ export default function PortfolioPage() {
                 {KINDS.map((kind) => {
                   const items = state.portfolio.filter((i) => i.kind === kind);
                   if (!items.length) return null;
+                  const KindIcon = ICONS[kind];
                   return (
                     <section key={kind}>
-                      <h2 className="mb-3 font-display text-lg font-bold text-slate-950">
-                        {ICONS[kind]} {kind} <span className="text-slate-400">({items.length})</span>
+                      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-slate-950">
+                        <KindIcon className="h-5 w-5 text-blue-600" strokeWidth={1.8} /> {kind} <span className="text-slate-400">({items.length})</span>
                       </h2>
                       <div className="grid gap-3 md:grid-cols-2">
                         {items.map((i) => (
@@ -146,7 +150,11 @@ export default function PortfolioPage() {
                             {i.description && <p className="mt-1 text-sm text-slate-600">{i.description}</p>}
                             <div className="mt-3 flex flex-wrap gap-2 text-xs">
                               {i.date && <Badge>{i.date}</Badge>}
-                              {i.fileName && <Badge tone="blue">📎 {i.fileName}</Badge>}
+                              {i.fileName && (
+                                <Badge tone="blue">
+                                  <Paperclip className="mr-1 h-3 w-3" /> {i.fileName}
+                                </Badge>
+                              )}
                               {i.link && (
                                 <a href={i.link} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 underline">
                                   ссылка ↗
@@ -159,7 +167,7 @@ export default function PortfolioPage() {
                               onClick={() => updateState((s) => ({ portfolio: s.portfolio.filter((p) => p.id !== i.id) }))}
                               className="absolute right-3 top-3 rounded px-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 print:hidden"
                             >
-                              ✕
+                              <X className="h-4 w-4" />
                             </button>
                           </Card>
                         ))}

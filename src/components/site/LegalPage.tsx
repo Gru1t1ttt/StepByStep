@@ -8,7 +8,7 @@ export function Contact() {
       {SITE.contactEmail}
     </a>
   ) : (
-    <span>через Telegram-канал StepByStep</span>
+    <span>по контактам поддержки Unilight (появятся на этой странице до публичного запуска)</span>
   );
 }
 

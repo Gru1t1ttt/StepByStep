@@ -1,5 +1,7 @@
 "use client";
 
+import { Check, ExternalLink } from "lucide-react";
+
 import { useState } from "react";
 import type { OpportunityType } from "@/data/opportunities";
 import { daysUntil, formatDate, matchOpportunity } from "@/lib/analysis";
@@ -90,14 +92,22 @@ export default function OpportunitiesPage() {
                       <span className="text-slate-500">Начать готовиться за {o.prepWeeks} нед.</span>
                       <div className="ml-auto flex gap-2">
                         <a href={o.url} target="_blank" rel="noopener noreferrer" className="rounded-lg px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-100">
-                          Сайт ↗
+                          <span className="flex items-center gap-1">
+                            Сайт <ExternalLink className="h-3.5 w-3.5" />
+                          </span>
                         </a>
                         <button
                           type="button"
                           onClick={() => updateState((s) => ({ savedOpportunities: toggleIn(s.savedOpportunities, o.id) }))}
                           className={`rounded-lg px-3 py-1.5 font-semibold ${saved ? "bg-emerald-50 text-emerald-700" : "bg-blue-600 text-white hover:bg-blue-700"}`}
                         >
-                          {saved ? "✓ В плане" : "+ В план"}
+                          {saved ? (
+                            <span className="flex items-center gap-1">
+                              <Check className="h-4 w-4" /> В плане
+                            </span>
+                          ) : (
+                            "+ В план"
+                          )}
                         </button>
                       </div>
                     </div>

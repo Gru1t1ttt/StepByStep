@@ -95,7 +95,7 @@ export default function AdminPage() {
         <div className="flex items-center gap-4">
           <Logo className="h-10 w-auto" />
           <div>
-            <h1 className="font-display text-xl font-bold text-slate-950">Админка StepByStep</h1>
+            <h1 className="font-display text-xl font-bold text-slate-950">Админка Unilight</h1>
             <p className="text-sm text-slate-500">Возможности и вузы для учеников · база знаний ИИ-наставника</p>
           </div>
         </div>
@@ -218,7 +218,7 @@ function AddDoc({ api, onAdded }: { api: Api; onAdded: () => void }) {
           title: f.title,
           text: f.text,
           meta: {
-            source: f.source || "Команда StepByStep",
+            source: f.source || "Команда Unilight",
             sourceUrl: f.sourceUrl || undefined,
             university: f.university || undefined,
             country: f.country || undefined,

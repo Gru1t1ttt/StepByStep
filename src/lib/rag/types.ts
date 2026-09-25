@@ -14,7 +14,7 @@ export type Outcome = "admitted" | "rejected" | "waitlisted" | "enrolled" | "";
 
 export type KnowledgeMeta = {
   // Общие
-  source?: string; // «Анкета выпускника», «Интервью», «Команда StepByStep», название сайта
+  source?: string; // «Анкета выпускника», «Интервью», «Команда Unilight», название сайта
   sourceUrl?: string;
   language?: string;
   demo?: boolean; // демонстрационная запись — удалить перед запуском

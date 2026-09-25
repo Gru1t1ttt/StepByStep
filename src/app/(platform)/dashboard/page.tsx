@@ -1,5 +1,7 @@
 "use client";
 
+import { Check, PartyPopper } from "lucide-react";
+
 import Link from "next/link";
 import { buildRoadmap, daysUntil, formatDate, gapAnalysis, rankOpportunities, readiness } from "@/lib/analysis";
 import { toggleIn, updateState } from "@/lib/store";
@@ -33,7 +35,7 @@ function FirstSteps({ state }: { state: { targets: string[]; savedOpportunities:
               <span
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${s.done ? "bg-emerald-500 text-white" : "bg-blue-600 text-white"}`}
               >
-                {s.done ? "✓" : i + 1}
+                {s.done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
               </span>
               <span>
                 <span className={`block text-sm font-medium ${s.done ? "text-slate-500 line-through" : "text-slate-900"}`}>{s.title}</span>
@@ -124,7 +126,9 @@ export default function DashboardPage() {
                     </Link>
                   </>
                 ) : (
-                  <p className="mt-2">Все шаги выполнены 🎉</p>
+                  <p className="mt-2 flex items-center gap-2">
+                    <PartyPopper className="h-5 w-5" /> Все шаги выполнены
+                  </p>
                 )}
               </div>
             </div>
@@ -151,7 +155,7 @@ export default function DashboardPage() {
                           isDone ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 hover:border-blue-500"
                         }`}
                       >
-                        {isDone && "✓"}
+                        {isDone && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
                       </button>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

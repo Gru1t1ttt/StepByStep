@@ -1,5 +1,7 @@
 "use client";
 
+import { Check } from "lucide-react";
+
 import { useState } from "react";
 import { formatDate, gapAnalysis, readiness, universityFit } from "@/lib/analysis";
 import { MAJORS } from "@/lib/profile";
@@ -102,7 +104,13 @@ export default function UniversitiesPage() {
                         onClick={() => updateState((s) => ({ targets: toggleIn(s.targets, u.id) }))}
                         className={`rounded-lg px-3 py-1.5 font-semibold ${isTarget ? "bg-emerald-50 text-emerald-700" : "bg-blue-600 text-white hover:bg-blue-700"}`}
                       >
-                        {isTarget ? "✓ В целях" : "+ В цели"}
+                        {isTarget ? (
+                          <span className="flex items-center gap-1">
+                            <Check className="h-4 w-4" /> В целях
+                          </span>
+                        ) : (
+                          "+ В цели"
+                        )}
                       </button>
                     </div>
                   </Card>

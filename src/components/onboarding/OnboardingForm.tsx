@@ -1,5 +1,7 @@
 "use client";
 
+import { FileText } from "lucide-react";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import {
@@ -119,7 +121,8 @@ export default function OnboardingForm() {
             ИИ заполнит анкету по резюме, а тебе останется только проверить. Нет резюме — просто заполни поля ниже.
           </p>
           <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm ring-1 ring-blue-200 hover:bg-blue-100">
-            {cvName ? `📄 ${cvName}` : "Выбрать файл (PDF, DOCX)"}
+            <FileText className="h-4 w-4" />
+            {cvName || "Выбрать файл (PDF, DOCX)"}
             <input
               type="file"
               accept=".pdf,.doc,.docx"

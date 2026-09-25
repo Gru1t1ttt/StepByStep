@@ -1,5 +1,7 @@
 "use client";
 
+import { Hand, Lock } from "lucide-react";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Profile } from "@/lib/profile";
@@ -50,7 +52,7 @@ export function WithProfile({ children }: { children: (profile: Profile, state: 
   if (auth.status === "signed-out")
     return (
       <Card className="mx-auto max-w-lg p-8 text-center">
-        <p className="text-4xl">🔐</p>
+        <Lock className="mx-auto h-9 w-9 text-slate-400" strokeWidth={1.6} />
         <h2 className="mt-3 font-display text-xl font-bold text-slate-950">Войди в аккаунт</h2>
         <p className="mt-2 text-slate-600">Профиль, план и портфолио сохраняются в аккаунте и доступны с любого устройства.</p>
         <div className="mt-6 flex justify-center gap-2">
@@ -67,7 +69,7 @@ export function WithProfile({ children }: { children: (profile: Profile, state: 
   if (!state.profile)
     return (
       <Card className="mx-auto max-w-lg p-8 text-center">
-        <p className="text-4xl">👋</p>
+        <Hand className="mx-auto h-9 w-9 text-slate-400" strokeWidth={1.6} />
         <h2 className="mt-3 font-display text-xl font-bold text-slate-950">Сначала расскажи о себе</h2>
         <p className="mt-2 text-slate-600">
           Платформа строит карту развития, подбирает возможности и считает gap analysis на основе твоего профиля.

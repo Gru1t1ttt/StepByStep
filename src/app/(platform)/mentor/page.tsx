@@ -1,5 +1,7 @@
 "use client";
 
+import { MessageCircle } from "lucide-react";
+
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { buildRoadmap, gapAnalysis, rankOpportunities, type Catalog } from "@/lib/analysis";
 import type { Profile } from "@/lib/profile";
@@ -130,7 +132,7 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
       <Card className="flex-1 overflow-y-auto">
         {shown.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <p className="text-4xl">💬</p>
+            <MessageCircle className="h-10 w-10 text-slate-300" strokeWidth={1.5} />
             <p className="mt-3 max-w-md text-slate-600">
               Я знаю твой профиль, цели и карту развития. Спроси, что делать дальше, попроси идеи проектов или разбор пробелов.
             </p>

@@ -1,5 +1,7 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
+import { Award, BarChart3, CalendarDays, Check, Code2, Compass, FolderOpen, HeartHandshake, MessageCircle, Target, Trophy, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 // Макеты экранов платформы для главной. Данные в них — пример, не реальные пользователи.
@@ -23,7 +25,7 @@ function RoadmapScreen() {
                 s.done ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
               }`}
             >
-              {s.done ? "✓" : i + 1}
+              {s.done ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
             </span>
             <span className="flex-1 text-sm font-medium text-slate-800">{s.title}</span>
             <span className="hidden text-xs text-slate-500 sm:block">{s.when}</span>
@@ -110,16 +112,18 @@ function MentorScreen() {
 
 function PortfolioScreen() {
   const items = [
-    { icon: "🏆", title: "Призёр областной олимпиады по физике", tag: "Достижение" },
-    { icon: "💻", title: "Telegram-бот расписания для школы", tag: "Проект · GitHub" },
-    { icon: "📜", title: "IELTS 6.5", tag: "Сертификат" },
-    { icon: "🤝", title: "Волонтёр благотворительного фонда, 120 часов", tag: "Активность" },
+    { icon: Trophy, title: "Призёр областной олимпиады по физике", tag: "Достижение" },
+    { icon: Code2, title: "Telegram-бот расписания для школы", tag: "Проект · GitHub" },
+    { icon: Award, title: "IELTS 6.5", tag: "Сертификат" },
+    { icon: HeartHandshake, title: "Волонтёр благотворительного фонда, 120 часов", tag: "Активность" },
   ];
   return (
     <div className="grid gap-3">
       {items.map((i) => (
         <div key={i.title} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
-          <span className="text-xl">{i.icon}</span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+            <i.icon className="h-4.5 w-4.5" strokeWidth={1.8} />
+          </span>
           <span className="flex-1 text-sm font-medium text-slate-800">{i.title}</span>
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{i.tag}</span>
         </div>
@@ -157,41 +161,57 @@ function CalendarScreen() {
   );
 }
 
-const TABS: { label: string; screen: ReactNode }[] = [
-  { label: "Карта развития", screen: <RoadmapScreen /> },
-  { label: "Возможности", screen: <OpportunitiesScreen /> },
-  { label: "Gap analysis", screen: <GapScreen /> },
-  { label: "ИИ-наставник", screen: <MentorScreen /> },
-  { label: "Портфолио", screen: <PortfolioScreen /> },
-  { label: "Дедлайны", screen: <CalendarScreen /> },
+const TABS: { label: string; hint: string; icon: LucideIcon; screen: ReactNode }[] = [
+  { label: "Карта развития", hint: "План по неделям до поступления", icon: Compass, screen: <RoadmapScreen /> },
+  { label: "Возможности", hint: "Олимпиады и школы под твой профиль", icon: Target, screen: <OpportunitiesScreen /> },
+  { label: "Gap analysis", hint: "Чего не хватает до выбранного вуза", icon: BarChart3, screen: <GapScreen /> },
+  { label: "ИИ-наставник", hint: "Помнит тебя и отвечает честно", icon: MessageCircle, screen: <MentorScreen /> },
+  { label: "Портфолио", hint: "Все достижения в одном месте", icon: FolderOpen, screen: <PortfolioScreen /> },
+  { label: "Дедлайны", hint: "Напомним, когда пора начинать", icon: CalendarDays, screen: <CalendarScreen /> },
 ];
 
 export default function PlatformTabs() {
   const [active, setActive] = useState(0);
+  const tab = TABS[active];
   return (
-    <div>
-      <div className="mx-auto flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-        {TABS.map((t, i) => (
-          <button
-            key={t.label}
-            type="button"
-            onClick={() => setActive(i)}
-            className={`shrink-0 rounded-lg px-3 py-2 text-sm transition ${
-              active === i ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+    <div className="grid gap-4 lg:grid-cols-[300px_1fr] lg:gap-6">
+      {/* список разделов: вертикально на компьютере, прокруткой на телефоне */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:content-start lg:overflow-visible lg:px-0">
+        {TABS.map((t, i) => {
+          const on = active === i;
+          return (
+            <button
+              key={t.label}
+              type="button"
+              onClick={() => setActive(i)}
+              className={`flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition lg:w-full ${
+                on ? "border-slate-900 bg-slate-950 text-white shadow-lg shadow-slate-900/10" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+              }`}
+            >
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${on ? "bg-white/10" : "bg-slate-100"}`}>
+                <t.icon className="h-4.5 w-4.5" strokeWidth={1.8} />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold">{t.label}</span>
+                <span className={`hidden text-xs lg:block ${on ? "text-white/60" : "text-slate-500"}`}>{t.hint}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
-      <div className="mx-auto mt-6 max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
-        <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
-          <span className="h-3 w-3 rounded-full bg-rose-400" />
-          <span className="h-3 w-3 rounded-full bg-amber-400" />
-          <span className="h-3 w-3 rounded-full bg-emerald-400" />
-          <span className="mx-auto rounded-md bg-white px-10 py-0.5 text-xs text-slate-400">stepbystep.kz</span>
+
+      <div className="relative min-h-[420px] rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-xl shadow-slate-200/50 sm:p-8">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <tab.icon className="h-4 w-4 text-blue-600" strokeWidth={2} /> {tab.label}
+          </div>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">пример</span>
         </div>
-        <div className="min-h-[340px] bg-slate-50/50 p-5 sm:p-7">{TABS[active].screen}</div>
+        <AnimatePresence mode="wait">
+          <motion.div key={active} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
+            {tab.screen}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

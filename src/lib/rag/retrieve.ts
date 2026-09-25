@@ -75,7 +75,7 @@ export async function retrieveForMentor(question: string, student: StudentSummar
 }
 
 function formatForPrompt(hits: SearchHit[], numbers: Map<string, number>) {
-  if (!hits.length) return "В базе знаний StepByStep по этому вопросу ничего не найдено.";
+  if (!hits.length) return "В базе знаний Unilight по этому вопросу ничего не найдено.";
   // Явная пометка, что это чужой опыт: иначе модели иногда приписывают ученику чужие баллы и проекты.
   return hits
     .map((h) => {

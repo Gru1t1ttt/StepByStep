@@ -1,5 +1,7 @@
 "use client";
 
+import { AlarmClock } from "lucide-react";
+
 import Link from "next/link";
 import { buildRoadmap, daysUntil, formatDate } from "@/lib/analysis";
 import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
@@ -73,7 +75,9 @@ export default function CalendarPage() {
 
             {startNow.length > 0 && (
               <Card className="mb-6 border-amber-200 bg-amber-50">
-                <h2 className="font-semibold text-amber-900">⏰ Пора начинать</h2>
+                <h2 className="flex items-center gap-2 font-semibold text-amber-900">
+                  <AlarmClock className="h-5 w-5" /> Пора начинать
+                </h2>
                 <ul className="mt-2 grid gap-1 text-sm text-amber-900">
                   {startNow.map((e) => (
                     <li key={e.id}>

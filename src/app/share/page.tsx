@@ -1,5 +1,7 @@
 "use client";
 
+import { HeartHandshake } from "lucide-react";
+
 import { useState, type FormEvent } from "react";
 import Header from "@/components/site/Header";
 import { OUTCOME_LABELS, type Outcome } from "@/lib/rag/types";
@@ -59,10 +61,10 @@ export default function SharePage() {
       <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         {state === "done" ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-            <p className="text-4xl">🙏</p>
+            <HeartHandshake className="mx-auto h-10 w-10 text-blue-600" strokeWidth={1.6} />
             <h1 className="mt-3 font-display text-2xl font-bold text-slate-950">Спасибо!</h1>
             <p className="mt-2 text-slate-600">
-              Твоя история поможет сотням школьников. После проверки командой она станет частью базы знаний ИИ-наставника StepByStep.
+              Твоя история поможет сотням школьников. После проверки командой она станет частью базы знаний ИИ-наставника Unilight.
             </p>
             <button type="button" onClick={() => (setF(empty), setState("idle"))} className="mt-6 rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700">
               Рассказать ещё про один вуз
@@ -74,7 +76,7 @@ export default function SharePage() {
             <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Расскажи, как ты поступал(а)</h1>
             <p className="mt-3 text-slate-600">
               Школьникам больше всего нужен честный опыт: что реально сработало, какие были ошибки, сколько на самом деле пришлось работать. Отказы тоже очень ценны: они
-              показывают реальную картину. ИИ-наставник StepByStep будет опираться на такие истории, отвечая ученикам.
+              показывают реальную картину. ИИ-наставник Unilight будет опираться на такие истории, отвечая ученикам.
             </p>
 
             <form onSubmit={submit} className="mt-8 grid gap-6">
@@ -135,7 +137,7 @@ export default function SharePage() {
                 <label className="flex items-start gap-3 text-sm text-slate-700">
                   <input type="checkbox" checked={f.consent} onChange={(e) => setF({ ...f, consent: e.target.checked })} className="mt-1" required />
                   <span>
-                    Я согласен(на), что StepByStep использует мою историю в обезличенном виде (без имени и контактов) для ответов ИИ-наставника и материалов для школьников.
+                    Я согласен(на), что Unilight использует мою историю в обезличенном виде (без имени и контактов) для ответов ИИ-наставника и материалов для школьников.
                   </span>
                 </label>
               </section>

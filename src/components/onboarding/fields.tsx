@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 const inputClass =
@@ -190,7 +191,7 @@ export function RepeatList<T>({
             aria-label="Удалить"
             className="absolute right-2 top-2 rounded-md px-2 py-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
       ))}

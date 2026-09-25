@@ -1,5 +1,7 @@
 "use client";
 
+import { BarChart3, CalendarDays, Compass, FolderOpen, GraduationCap, Menu, MessageCircle, Target, UserRound } from "lucide-react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -7,14 +9,14 @@ import Logo from "@/components/site/Logo";
 import { signOut, useAuth } from "@/lib/store";
 
 export const NAV = [
-  { href: "/dashboard", label: "Карта развития", short: "Карта", icon: "🧭" },
-  { href: "/opportunities", label: "Возможности", short: "Возможности", icon: "🎯" },
-  { href: "/universities", label: "Университеты", short: "Вузы", icon: "🎓" },
-  { href: "/mentor", label: "ИИ-наставник", short: "Наставник", icon: "💬" },
-  { href: "/gap", label: "Gap analysis", short: "Gap analysis", icon: "📊" },
-  { href: "/portfolio", label: "Портфолио", short: "Портфолио", icon: "📁" },
-  { href: "/calendar", label: "Дедлайны", short: "Дедлайны", icon: "📅" },
-  { href: "/onboarding", label: "Мой профиль", short: "Профиль", icon: "👤" },
+  { href: "/dashboard", label: "Карта развития", short: "Карта", icon: Compass },
+  { href: "/opportunities", label: "Возможности", short: "Возможности", icon: Target },
+  { href: "/universities", label: "Университеты", short: "Вузы", icon: GraduationCap },
+  { href: "/mentor", label: "ИИ-наставник", short: "Наставник", icon: MessageCircle },
+  { href: "/gap", label: "Gap analysis", short: "Gap analysis", icon: BarChart3 },
+  { href: "/portfolio", label: "Портфолио", short: "Портфолио", icon: FolderOpen },
+  { href: "/calendar", label: "Дедлайны", short: "Дедлайны", icon: CalendarDays },
+  { href: "/onboarding", label: "Мой профиль", short: "Профиль", icon: UserRound },
 ];
 
 // На телефоне внизу — 4 главных раздела и «Ещё» с остальными.
@@ -54,7 +56,7 @@ export default function Sidebar() {
                   active ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <span aria-hidden>{n.icon}</span>
+                <n.icon className="h-4.5 w-4.5" strokeWidth={1.8} aria-hidden />
                 {n.label}
               </Link>
             );
@@ -100,7 +102,7 @@ function MobileNav({ path }: { path: string }) {
                 onClick={() => setOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${path === n.href ? "bg-blue-50 font-semibold text-blue-700" : "text-slate-700"}`}
               >
-                <span aria-hidden>{n.icon}</span>
+                <n.icon className="h-4.5 w-4.5" strokeWidth={1.8} aria-hidden />
                 {n.label}
               </Link>
             ))}
@@ -110,16 +112,12 @@ function MobileNav({ path }: { path: string }) {
       <nav className="fixed inset-x-0 bottom-0 z-50 flex border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         {MOBILE_MAIN.map((n) => (
           <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className={item(path === n.href)}>
-            <span className="text-lg leading-none" aria-hidden>
-              {n.icon}
-            </span>
+            <n.icon className="h-5 w-5" strokeWidth={1.8} aria-hidden />
             {n.short}
           </Link>
         ))}
         <button type="button" onClick={() => setOpen((v) => !v)} className={item(open || moreActive)} aria-expanded={open}>
-          <span className="text-lg leading-none" aria-hidden>
-            ☰
-          </span>
+          <Menu className="h-5 w-5" strokeWidth={1.8} aria-hidden />
           Ещё
         </button>
       </nav>

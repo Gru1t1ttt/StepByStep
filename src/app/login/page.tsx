@@ -1,5 +1,7 @@
 "use client";
 
+import { MailCheck } from "lucide-react";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
@@ -107,7 +109,7 @@ function LoginForm() {
   if (sent) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-        <p className="text-4xl">📬</p>
+        <MailCheck className="mx-auto h-10 w-10 text-blue-600" strokeWidth={1.6} />
         <h1 className="mt-3 font-display text-xl font-bold text-slate-950">Проверь почту</h1>
         <p className="mt-2 text-slate-600">
           {sent === "reset" ? (
