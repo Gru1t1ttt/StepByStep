@@ -47,6 +47,61 @@ export const FORMATS: Record<string, string> = { on_campus: "Очно", online: 
 export const STUDY_MODES: Record<string, string> = { full_time: "Полный день", part_time: "Частичная занятость" };
 export const LANGUAGES = ["English", "German", "French", "Spanish", "Italian", "Dutch", "Korean", "Japanese", "Chinese", "Turkish", "Russian", "Kazakh", "Czech", "Polish", "Hungarian"];
 
+// Подписи справочников на казахском и английском (русские — выше). Ключи те же.
+const FIELDS_KZ: Record<string, string> = {
+  "Computer Science": "Компьютерлік ғылымдар",
+  Engineering: "Инженерия",
+  Mathematics: "Математика",
+  "Physics and Astronomy": "Физика және астрономия",
+  Chemistry: "Химия",
+  "Chemical Engineering": "Химиялық инженерия",
+  "Materials Science": "Материалтану",
+  Energy: "Энергетика",
+  "Earth and Planetary Sciences": "Жер туралы ғылымдар",
+  "Environmental Science": "Экология",
+  "Agricultural and Biological Sciences": "Биология және агрономия",
+  "Biochemistry, Genetics and Molecular Biology": "Биохимия және генетика",
+  "Immunology and Microbiology": "Иммунология және микробиология",
+  Neuroscience: "Нейроғылымдар",
+  Medicine: "Медицина",
+  Dentistry: "Стоматология",
+  Nursing: "Мейірбике ісі",
+  "Health Professions": "Денсаулық сақтау",
+  "Pharmacology, Toxicology and Pharmaceutics": "Фармацевтика",
+  Veterinary: "Ветеринария",
+  Psychology: "Психология",
+  "Business, Management and Accounting": "Бизнес және менеджмент",
+  "Economics, Econometrics and Finance": "Экономика және қаржы",
+  "Decision Sciences": "Талдау және операцияларды зерттеу",
+  "Social Sciences": "Әлеуметтік ғылымдар, құқық, саясаттану",
+  "Arts and Humanities": "Гуманитарлық ғылымдар және өнер",
+};
+
+const LABELS = {
+  kz: {
+    continents: { EU: "Еуропа", AS: "Азия", NA: "Солтүстік Америка", SA: "Оңтүстік Америка", AF: "Африка", OC: "Аустралия және Мұхит аралдары" },
+    controls: { public: "Мемлекеттік", private: "Жекеменшік", for_profit: "Коммерциялық" },
+    degrees: { foundation: "Foundation", bachelor: "Бакалавриат", master: "Магистратура", phd: "PhD" },
+    formats: { on_campus: "Күндізгі", online: "Онлайн", blended: "Аралас" },
+    studyModes: { full_time: "Толық күн", part_time: "Жартылай жүктеме" },
+  },
+  en: {
+    continents: { EU: "Europe", AS: "Asia", NA: "North America", SA: "South America", AF: "Africa", OC: "Australia and Oceania" },
+    controls: { public: "Public", private: "Private", for_profit: "For-profit" },
+    degrees: { foundation: "Foundation", bachelor: "Bachelor’s", master: "Master’s", phd: "PhD" },
+    formats: { on_campus: "On campus", online: "Online", blended: "Blended" },
+    studyModes: { full_time: "Full-time", part_time: "Part-time" },
+  },
+};
+
+// Все подписи справочников на нужном языке
+export function worldLabels(lang: "ru" | "kz" | "en") {
+  if (lang === "ru") return { fields: FIELDS, continents: CONTINENTS, controls: CONTROLS, degrees: DEGREES, formats: FORMATS, studyModes: STUDY_MODES };
+  const l = LABELS[lang];
+  const fields = lang === "en" ? Object.fromEntries(Object.keys(FIELDS).map((k) => [k, k])) : FIELDS_KZ;
+  return { fields, continents: l.continents as Record<string, string>, controls: l.controls as Record<string, string>, degrees: l.degrees as Record<string, string>, formats: l.formats as Record<string, string>, studyModes: l.studyModes as Record<string, string> };
+}
+
 export type WorldUniversity = {
   id: string;
   name: string;
@@ -196,7 +251,7 @@ export const hasProgramFilters = (f: Filters) =>
 export function countryName(code: string | null, lang = "ru") {
   if (!code) return "";
   try {
-    return new Intl.DisplayNames([lang], { type: "region" }).of(code) ?? code;
+    return new Intl.DisplayNames([lang === "kz" ? "kk" : lang], { type: "region" }).of(code) ?? code;
   } catch {
     return code;
   }

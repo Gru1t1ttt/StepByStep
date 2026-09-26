@@ -1,19 +1,22 @@
 "use client";
 
-import { useT } from "@/lib/i18n/client";
+import { useLang, useT } from "@/lib/i18n/client";
 import Link from "next/link";
 import { useState } from "react";
 import { gapAnalysis, readiness, suggestedUniversities } from "@/lib/analysis";
 import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
 
 const STATUS = {
-  ok: { label: "Готово", tone: "green", bar: "bg-emerald-500", width: 100 },
-  partial: { label: "Почти", tone: "amber", bar: "bg-amber-400", width: 55 },
-  missing: { label: "Не хватает", tone: "rose", bar: "bg-rose-400", width: 12 },
+  ok: { tone: "green", bar: "bg-emerald-500", width: 100 },
+  partial: { tone: "amber", bar: "bg-amber-400", width: 55 },
+  missing: { tone: "rose", bar: "bg-rose-400", width: 12 },
 } as const;
 
 export default function GapPage() {
-  const tc = useT().cabinet;
+  const t = useT();
+  const tc = t.cabinet;
+  const g = t.app.gap;
+  const lang = useLang();
   const [picked, setPicked] = useState("");
 
   return (
@@ -23,8 +26,8 @@ export default function GapPage() {
           ? catalog.universities.filter((u) => state.targets.includes(u.id))
           : suggestedUniversities(profile, catalog.universities).slice(0, 5);
         const uni = catalog.universities.find((u) => u.id === picked) ?? options[0];
-        if (!uni) return <Card className="text-center text-slate-500">Каталог университетов пока пуст.</Card>;
-        const rows = gapAnalysis(profile, uni);
+        if (!uni) return <Card className="text-center text-slate-500">{t.app.common.catalogEmpty}</Card>;
+        const rows = gapAnalysis(profile, uni, lang);
         const r = readiness(rows);
 
         return (
@@ -50,16 +53,16 @@ export default function GapPage() {
             </div>
             {!state.targets.length && (
               <p className="mb-5 text-sm text-slate-500">
-                Показаны вузы, подходящие под твой профиль.{" "}
+                {g.suggested}{" "}
                 <Link href="/universities" className="font-semibold text-blue-700">
-                  Выбрать свои цели →
+                  {g.pickOwn}
                 </Link>
               </p>
             )}
 
             <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
               <Card className="h-fit text-center">
-                <p className="text-sm text-slate-500">Готовность к</p>
+                <p className="text-sm text-slate-500">{g.readinessFor}</p>
                 <p className="font-semibold text-slate-900">{uni.name}</p>
                 <div
                   className="mx-auto mt-5 flex h-36 w-36 items-center justify-center rounded-full"
@@ -68,10 +71,10 @@ export default function GapPage() {
                   <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white font-display text-3xl font-bold text-slate-950">{r}%</div>
                 </div>
                 <p className="mt-4 text-sm text-slate-600">
-                  {r >= 75 ? "Сильная позиция — работай над глубиной и эссе." : r >= 45 ? "Хорошая база, но есть пробелы." : "Есть над чем поработать — начни с красных пунктов."}
+                  {r >= 75 ? g.strong : r >= 45 ? g.good : g.weak}
                 </p>
                 <Link href="/mentor" className="mt-4 inline-block text-sm font-semibold text-blue-700">
-                  Разобрать с ИИ-наставником →
+                  {g.discuss}
                 </Link>
               </Card>
 
@@ -84,9 +87,9 @@ export default function GapPage() {
                         <span className="font-medium text-slate-900">{row.label}</span>
                         <div className="flex items-center gap-3 text-sm">
                           <span className="text-slate-500">
-                            ты: <b className="text-slate-800">{row.you}</b> · нужно: <b className="text-slate-800">{row.need}</b>
+                            {g.you}: <b className="text-slate-800">{row.you}</b> · {g.need}: <b className="text-slate-800">{row.need}</b>
                           </span>
-                          <Badge tone={s.tone}>{s.label}</Badge>
+                          <Badge tone={s.tone}>{g[row.status]}</Badge>
                         </div>
                       </div>
                       <div className="mt-3 h-2 rounded-full bg-slate-100">

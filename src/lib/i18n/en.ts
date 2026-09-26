@@ -1,3 +1,4 @@
+import appEn from "./app-en";
 import type { Dict } from "./ru";
 
 const en: Dict = {
@@ -269,6 +270,7 @@ const en: Dict = {
       fillProfile: "Fill in the questionnaire",
     },
   },
+  app: appEn,
   login: {
     title: "Welcome",
     subtitle: "Your account keeps your profile, plan and portfolio — on any device.",

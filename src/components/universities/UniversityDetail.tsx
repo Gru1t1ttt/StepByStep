@@ -6,7 +6,15 @@ import { Badge, Card, buttonClass, ghostButtonClass } from "@/components/platfor
 import { formatDate, gapAnalysis, readiness } from "@/lib/analysis";
 import { useCatalog } from "@/lib/catalog";
 import { toggleIn, updateState, usePlatform } from "@/lib/store";
-import { CONTROLS, DEGREES, FIELDS, FORMATS, STUDY_MODES, countryName, money, type Program, type WorldUniversityDetail } from "@/lib/world";
+import { fmt } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n/client";
+import { LOCALE, tv } from "@/lib/i18n/values";
+import { countryName, worldLabels, type Program, type WorldUniversityDetail } from "@/lib/world";
+
+function useMoney() {
+  const locale = LOCALE[useLang()];
+  return (n: number | null, currency = "USD") => (n == null ? "" : currency === "USD" ? `$${n.toLocaleString(locale)}` : `${n.toLocaleString(locale)} ${currency}`);
+}
 
 function Fact({ label, value }: { label: string; value: string | number | null | undefined }) {
   if (value == null || value === "") return null;
@@ -19,7 +27,11 @@ function Fact({ label, value }: { label: string; value: string | number | null |
 }
 
 function ProgramCard({ p }: { p: Program }) {
-  const years = p.durationMonths ? (p.durationMonths % 12 === 0 ? `${p.durationMonths / 12} г.` : `${p.durationMonths} мес.`) : null;
+  const t = useT().app.uni;
+  const lang = useLang();
+  const money = useMoney();
+  const { fields: FIELDS, degrees: DEGREES, formats: FORMATS, studyModes: STUDY_MODES } = worldLabels(lang);
+  const years = p.durationMonths ? (p.durationMonths % 12 === 0 ? fmt(t.years, { n: p.durationMonths / 12 }) : fmt(t.months, { n: p.durationMonths })) : null;
   return (
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -35,7 +47,7 @@ function ProgramCard({ p }: { p: Program }) {
         {p.tuitionAmount != null && (
           <div className="text-right">
             <p className="font-display text-lg font-bold text-slate-950">{money(p.tuitionAmount, p.tuitionCurrency)}</p>
-            <p className="text-xs text-slate-500">в год{p.tuitionCurrency !== "USD" && p.tuitionUsd ? ` · ≈ ${money(p.tuitionUsd)}` : ""}</p>
+            <p className="text-xs text-slate-500">{t.perYearShort}{p.tuitionCurrency !== "USD" && p.tuitionUsd ? ` · ≈ ${money(p.tuitionUsd)}` : ""}</p>
           </div>
         )}
       </div>
@@ -46,7 +58,7 @@ function ProgramCard({ p }: { p: Program }) {
         {years && (
           <span className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-slate-400" /> {years}
-            {p.startMonth && `, начало — ${p.startMonth}`}
+            {p.startMonth && fmt(t.starts, { m: p.startMonth })}
           </span>
         )}
         {(p.ieltsMin || p.toeflMin || p.satMin) && (
@@ -57,7 +69,7 @@ function ProgramCard({ p }: { p: Program }) {
         )}
         {(p.deadline || p.deadlineNote) && (
           <span className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-slate-400" /> {p.deadline ? `Подача до ${formatDate(p.deadline)}` : p.deadlineNote}
+            <CalendarDays className="h-4 w-4 text-slate-400" /> {p.deadline ? fmt(t.applyUntil, { date: formatDate(p.deadline, lang) }) : p.deadlineNote}
           </span>
         )}
       </div>
@@ -69,9 +81,9 @@ function ProgramCard({ p }: { p: Program }) {
         </p>
       )}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
-        <span>Проверено по официальному сайту {formatDate(p.checkedAt)}</span>
+        <span>{fmt(t.checked, { date: formatDate(p.checkedAt, lang) })}</span>
         <a href={p.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-medium text-blue-700">
-          Страница программы <ExternalLink className="h-3.5 w-3.5" />
+          {t.programPage} <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </div>
     </Card>
@@ -80,36 +92,38 @@ function ProgramCard({ p }: { p: Program }) {
 
 // Наши требования (если вуз есть в каталоге Unilight): готовность по gap analysis и «В цели».
 function CuratedBlock({ curatedId }: { curatedId: string }) {
+  const t = useT().app.uni;
+  const lang = useLang();
   const state = usePlatform();
   const catalog = useCatalog();
   const cu = catalog?.universities.find((x) => x.id === curatedId);
   if (!cu) return null;
   const isTarget = !!state?.targets.includes(cu.id);
-  const r = state?.profile ? readiness(gapAnalysis(state.profile, cu)) : null;
+  const r = state?.profile ? readiness(gapAnalysis(state.profile, cu, lang)) : null;
   return (
     <Card className="border-blue-200 bg-blue-50">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-semibold text-blue-900">Есть требования Unilight</p>
+          <p className="font-semibold text-blue-900">{t.curated}</p>
           <p className="mt-1 text-sm text-blue-900/80">
-            IELTS {cu.ielts}+{cu.sat ? ` · SAT ${cu.sat}+` : ""} · {cu.grants} · подача до {formatDate(cu.deadline)}
+            IELTS {cu.ielts}+{cu.sat ? ` · SAT ${cu.sat}+` : ""} · {tv(cu.grants, lang)} · {fmt(t.applyBy, { date: formatDate(cu.deadline, lang) })}
           </p>
         </div>
         <div className="flex items-center gap-3">
           {r !== null && (
             <span className="text-right">
               <span className={`block font-display text-xl font-bold ${r >= 75 ? "text-emerald-600" : r >= 45 ? "text-amber-600" : "text-rose-500"}`}>{r}%</span>
-              <span className="text-xs text-slate-500">готовность</span>
+              <span className="text-xs text-slate-500">{t.readiness}</span>
             </span>
           )}
           {state && (
             <button type="button" onClick={() => updateState((s) => ({ targets: toggleIn(s.targets, cu.id) }))} className={isTarget ? ghostButtonClass : buttonClass}>
-              {isTarget ? "В целях ✓" : "+ В цели"}
+              {isTarget ? `${t.inTargets} ✓` : t.toTargets}
             </button>
           )}
           {isTarget && (
             <Link href="/gap" className="text-sm font-medium text-blue-700">
-              Gap analysis →
+              {t.toGap}
             </Link>
           )}
         </div>
@@ -119,13 +133,18 @@ function CuratedBlock({ curatedId }: { curatedId: string }) {
 }
 
 export default function UniversityDetailView({ u }: { u: WorldUniversityDetail }) {
-  const place = [u.city, u.region && u.region !== u.city ? u.region : "", countryName(u.countryCode)].filter(Boolean).join(", ");
+  const t = useT().app.uni;
+  const lang = useLang();
+  const money = useMoney();
+  const num = (n: number) => n.toLocaleString(LOCALE[lang]);
+  const { fields: FIELDS, controls: CONTROLS } = worldLabels(lang);
+  const place = [u.city, u.region && u.region !== u.city ? u.region : "", countryName(u.countryCode, lang)].filter(Boolean).join(", ");
   const otherNames = [...new Set(Object.entries(u.names).filter(([lang]) => ["ru", "kk", "en"].includes(lang)).map(([, n]) => n))].filter((n) => n !== u.name);
   const fields = Object.entries(u.fieldScores).slice(0, 8);
   return (
     <div className="grid gap-5">
       <Link href="/universities" className="flex w-fit items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800">
-        <ArrowLeft className="h-4 w-4" /> Все вузы
+        <ArrowLeft className="h-4 w-4" /> {t.back}
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -136,14 +155,14 @@ export default function UniversityDetailView({ u }: { u: WorldUniversityDetail }
             <MapPin className="h-4 w-4 text-slate-400" /> {place}
             {u.lat != null && u.lng != null && (
               <a href={`https://www.openstreetmap.org/?mlat=${u.lat}&mlon=${u.lng}#map=14/${u.lat}/${u.lng}`} target="_blank" rel="noopener noreferrer" className="ml-1 text-sm font-medium text-blue-700">
-                на карте
+                {t.onMap}
               </a>
             )}
           </p>
         </div>
         {u.homepage && (
           <a href={u.homepage} target="_blank" rel="noopener noreferrer" className={ghostButtonClass}>
-            <Globe2 className="mr-1.5 h-4 w-4" /> Официальный сайт
+            <Globe2 className="mr-1.5 h-4 w-4" /> {t.website}
           </a>
         )}
       </div>
@@ -151,20 +170,20 @@ export default function UniversityDetailView({ u }: { u: WorldUniversityDetail }
       {u.curatedId && <CuratedBlock curatedId={u.curatedId} />}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <Fact label="Основан" value={u.established} />
-        <Fact label="Тип" value={u.control ? CONTROLS[u.control] : null} />
-        <Fact label="Студентов бакалавриата" value={u.students?.toLocaleString("ru-RU")} />
-        <Fact label="Научный вес (место в мире)" value={u.scienceRank ? `#${u.scienceRank.toLocaleString("ru-RU")}` : null} />
-        <Fact label="Процент поступивших" value={u.admissionRate != null ? `${Math.round(u.admissionRate * 100)}%` : null} />
-        <Fact label="Средний SAT поступивших" value={u.satAvg} />
-        <Fact label="Стоимость в год (для иностранцев)" value={u.tuitionOut != null ? money(u.tuitionOut) : null} />
-        <Fact label="Научных публикаций" value={u.worksCount ? u.worksCount.toLocaleString("ru-RU") : null} />
+        <Fact label={t.facts.founded} value={u.established} />
+        <Fact label={t.facts.type} value={u.control ? CONTROLS[u.control] : null} />
+        <Fact label={t.facts.students} value={u.students != null ? num(u.students) : null} />
+        <Fact label={t.facts.rank} value={u.scienceRank ? `#${num(u.scienceRank)}` : null} />
+        <Fact label={t.facts.admission} value={u.admissionRate != null ? `${Math.round(u.admissionRate * 100)}%` : null} />
+        <Fact label={t.facts.sat} value={u.satAvg} />
+        <Fact label={t.facts.cost} value={u.tuitionOut != null ? money(u.tuitionOut) : null} />
+        <Fact label={t.facts.works} value={u.worksCount ? num(u.worksCount) : null} />
       </div>
 
       {fields.length > 0 && (
         <Card>
-          <h2 className="font-display text-lg font-bold text-slate-950">Сильные направления</h2>
-          <p className="mt-1 text-sm text-slate-500">По темам научных работ вуза — показывает, в чём он силён в исследованиях.</p>
+          <h2 className="font-display text-lg font-bold text-slate-950">{t.strongFields}</h2>
+          <p className="mt-1 text-sm text-slate-500">{t.fieldsHint}</p>
           <div className="mt-4 grid gap-2.5">
             {fields.map(([f, share]) => (
               <div key={f} className="grid grid-cols-[minmax(0,12rem)_1fr_3rem] items-center gap-3 text-sm">
@@ -180,7 +199,7 @@ export default function UniversityDetailView({ u }: { u: WorldUniversityDetail }
       )}
 
       <section>
-        <h2 className="mb-3 font-display text-lg font-bold text-slate-950">Программы {u.programList.length > 0 && <span className="text-slate-400">({u.programList.length})</span>}</h2>
+        <h2 className="mb-3 font-display text-lg font-bold text-slate-950">{t.programs} {u.programList.length > 0 && <span className="text-slate-400">({u.programList.length})</span>}</h2>
         {u.programList.length ? (
           <div className="grid gap-3 xl:grid-cols-2">
             {u.programList.map((p) => (
@@ -189,21 +208,21 @@ export default function UniversityDetailView({ u }: { u: WorldUniversityDetail }
           </div>
         ) : (
           <Card className="text-sm text-slate-600">
-            Программы этого вуза мы ещё не внесли. Список направлений, стоимость и требования смотри на{" "}
+            {t.noPrograms[0]}{" "}
             {u.homepage ? (
               <a href={u.homepage} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 underline">
-                официальном сайте
+                {t.noPrograms[1]}
               </a>
             ) : (
-              "официальном сайте"
+              t.noPrograms[1]
             )}{" "}
-            или спроси ИИ-наставника.
+            {t.noPrograms[2]}
           </Card>
         )}
       </section>
 
       <p className="text-xs text-slate-500">
-        Источники:{" "}
+        {t.sourcesLabel}{" "}
         {u.openalexId && (
           <a href={`https://openalex.org/institutions/${u.openalexId}`} target="_blank" rel="noopener noreferrer" className="underline">
             OpenAlex
@@ -225,7 +244,7 @@ export default function UniversityDetailView({ u }: { u: WorldUniversityDetail }
             </a>
           </>
         )}
-        . Перед подачей сверяй требования и сроки на официальном сайте вуза.
+        {t.checkSite}
       </p>
     </div>
   );

@@ -3,6 +3,8 @@
 
 import type { Opportunity } from "@/data/opportunities";
 import type { University } from "@/data/universities";
+import { fmt, getDict, type Lang } from "./i18n";
+import { dateLong, tv } from "./i18n/values";
 import type { Profile } from "./profile";
 
 export const TODAY = new Date();
@@ -14,9 +16,12 @@ export function daysUntil(iso: string) {
   return Math.ceil((new Date(iso).getTime() - TODAY.getTime()) / 86_400_000);
 }
 
-export function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+export function formatDate(iso: string, lang: Lang = "ru") {
+  return dateLong(iso, lang);
 }
+
+// Тексты расчётов на нужном языке
+const A = (lang: Lang) => getDict(lang).app.an;
 
 export function gradeNumber(p: Profile) {
   const n = parseInt(p.grade, 10);
@@ -77,28 +82,29 @@ function hasResearch(p: Profile) {
 
 export type Match = { opportunity: Opportunity; score: number; reasons: string[] };
 
-export function matchOpportunity(p: Profile, o: Opportunity): Match {
+export function matchOpportunity(p: Profile, o: Opportunity, lang: Lang = "ru"): Match {
+  const a = A(lang);
   const reasons: string[] = [];
   let score = 0;
 
   const common = o.interests.filter((i) => p.interests.includes(i));
   if (common.length) {
     score += Math.min(55, 30 + common.length * 12);
-    reasons.push(`по твоим интересам: ${common.join(", ")}`);
+    reasons.push(fmt(a.byInterests, { list: common.map((i) => tv(i, lang)).join(", ") }));
   }
 
   const grade = gradeNumber(p);
   if (grade >= o.minGrade && grade <= o.maxGrade) {
     score += 20;
-    reasons.push(`подходит для ${p.grade} класса`);
+    reasons.push(fmt(a.forGrade, { grade: p.grade }));
   } else if (grade < o.minGrade) {
     score += 5;
-    reasons.push(`станет доступно с ${o.minGrade} класса`);
+    reasons.push(fmt(a.fromGrade, { n: o.minGrade }));
   }
 
   if (o.free) {
     score += 5;
-    reasons.push("бесплатно");
+    reasons.push(a.free);
   }
 
   const days = daysUntil(o.deadline);
@@ -109,18 +115,18 @@ export function matchOpportunity(p: Profile, o: Opportunity): Match {
   const wantsTech = p.targetMajors.some((m) => /Engineering|Computer|Physics|Math|Data/.test(m));
   if (wantsTech && (o.type === "Олимпиада" || o.type === "Хакатон")) {
     score += 10;
-    reasons.push("усиливает заявку на технические направления");
+    reasons.push(a.tech);
   }
   if (o.type === "Исследование" && !hasResearch(p)) {
     score += 10;
-    reasons.push("закроет пробел «исследовательский проект»");
+    reasons.push(a.closesResearch);
   }
 
   return { opportunity: o, score: Math.max(0, Math.min(100, score)), reasons };
 }
 
-export function rankOpportunities(p: Profile, opportunities: Opportunity[]) {
-  return opportunities.map((o) => matchOpportunity(p, o))
+export function rankOpportunities(p: Profile, opportunities: Opportunity[], lang: Lang = "ru") {
+  return opportunities.map((o) => matchOpportunity(p, o, lang))
     .filter((m) => daysUntil(m.opportunity.deadline) > 0)
     .sort((a, b) => b.score - a.score);
 }
@@ -137,22 +143,23 @@ export type GapRow = {
   advice: string;
 };
 
-export function gapAnalysis(p: Profile, u: University): GapRow[] {
+export function gapAnalysis(p: Profile, u: University, lang: Lang = "ru"): GapRow[] {
+  const a = A(lang);
   const rows: GapRow[] = [];
   const eng = englishScore(p);
   const plannedEnglish = p.exams.some((e) => ["IELTS", "TOEFL", "Duolingo English Test"].includes(e.exam) && e.status === "planned");
   rows.push({
     key: "english",
-    label: "Английский (IELTS или эквивалент)",
-    you: eng ? String(eng) : plannedEnglish ? "запланирован" : "нет",
+    label: a.english,
+    you: eng ? String(eng) : plannedEnglish ? a.planned : a.none,
     need: `${u.ielts}+`,
     status: eng === null ? "missing" : eng >= u.ielts ? "ok" : eng >= u.ielts - 0.5 ? "partial" : "missing",
     advice:
       eng === null
-        ? `Запланируй IELTS: цель ${u.ielts}+. На подготовку обычно нужно 2–4 месяца.`
+        ? fmt(a.englishPlan, { need: u.ielts })
         : eng >= u.ielts
-          ? "Требование закрыто."
-          : `Не хватает ${(u.ielts - eng).toFixed(1)} балла — сфокусируйся на самой слабой секции и пересдай.`,
+          ? a.done
+          : fmt(a.englishMore, { n: (u.ielts - eng).toFixed(1) }),
   });
 
   if (u.sat) {
@@ -160,57 +167,57 @@ export function gapAnalysis(p: Profile, u: University): GapRow[] {
     rows.push({
       key: "sat",
       label: "SAT",
-      you: sat ? String(sat) : "нет",
+      you: sat ? String(sat) : a.none,
       need: `${u.sat}+`,
       status: sat === null ? "missing" : sat >= u.sat ? "ok" : sat >= u.sat - 60 ? "partial" : "missing",
       advice:
         sat === null
-          ? `Сдай SAT с целью ${u.sat}+ (для многих вузов test-optional, но сильный балл помогает).`
+          ? fmt(a.satPlan, { need: u.sat })
           : sat >= u.sat
-            ? "Требование закрыто."
-            : `Нужно ещё ${u.sat - sat} баллов — пересдача через 2–3 месяца подготовки.`,
+            ? a.done
+            : fmt(a.satMore, { n: u.sat - sat }),
     });
   }
 
   const gpa = gpaOn5(p);
   rows.push({
     key: "gpa",
-    label: "Средний балл (из 5)",
-    you: gpa ? String(gpa) : "не указан",
+    label: a.gpa,
+    you: gpa ? String(gpa) : a.notSet,
     need: `${u.gpa}+`,
     status: gpa === null ? "partial" : gpa >= u.gpa ? "ok" : gpa >= u.gpa - 0.3 ? "partial" : "missing",
-    advice: gpa === null ? "Укажи средний балл в профиле." : gpa >= u.gpa ? "Требование закрыто." : "Подтяни оценки в оставшиеся четверти — последние годы важнее всего.",
+    advice: gpa === null ? a.gpaSet : gpa >= u.gpa ? a.done : a.gpaMore,
   });
 
   const ol = strongAchievements(p);
   rows.push({
     key: "olympiads",
-    label: "Олимпиады и конкурсы (от областного уровня)",
+    label: a.olympiads,
     you: String(ol),
     need: `${u.olympiads}+`,
     status: ol >= u.olympiads ? "ok" : ol > 0 ? "partial" : u.olympiads === 0 ? "ok" : "missing",
-    advice: ol >= u.olympiads ? "Хороший уровень — держи темп." : `Нужно ещё ${u.olympiads - ol}. Смотри олимпиады и конкурсы в разделе «Возможности».`,
+    advice: ol >= u.olympiads ? a.olympiadsOk : fmt(a.olympiadsMore, { n: u.olympiads - ol }),
   });
 
   const act = activitiesCount(p);
   rows.push({
     key: "activities",
-    label: "Внеклассная активность",
+    label: a.activities,
     you: String(act),
     need: `${u.activities}+`,
     status: act >= u.activities ? "ok" : act > 0 ? "partial" : "missing",
-    advice: act >= u.activities ? "Достаточно — теперь важна глубина и результат." : "Добавь долгосрочную активность: клуб, волонтёрство, свой проект.",
+    advice: act >= u.activities ? a.activitiesOk : a.activitiesMore,
   });
 
   if (u.research) {
     const r = hasResearch(p);
     rows.push({
       key: "research",
-      label: "Исследовательский проект",
-      you: r ? "есть" : "нет",
-      need: "желательно",
+      label: a.research,
+      you: r ? a.has : a.none,
+      need: a.wanted,
       status: r ? "ok" : "missing",
-      advice: r ? "Отлично — оформи результат в портфолио." : "Сделай исследование по своей теме — идеи даст ИИ-наставник.",
+      advice: r ? a.researchOk : a.researchMore,
     });
   }
 
@@ -218,11 +225,11 @@ export function gapAnalysis(p: Profile, u: University): GapRow[] {
   if (p.targetMajors.length) {
     rows.push({
       key: "major",
-      label: "Твоё направление в этом вузе",
-      you: majorFit.length ? majorFit.join(", ") : "нет совпадений",
-      need: "есть",
+      label: a.major,
+      you: majorFit.length ? majorFit.join(", ") : a.majorNone,
+      need: a.has,
       status: majorFit.length ? "ok" : "missing",
-      advice: majorFit.length ? "Направление есть." : "В этом вузе нет выбранного направления — проверь альтернативы.",
+      advice: majorFit.length ? a.majorOk : a.majorMiss,
     });
   }
 
@@ -263,15 +270,16 @@ export type RoadmapStep = {
   href: string;
 };
 
-export function buildRoadmap(p: Profile, targetIds: string[], catalog: Catalog): RoadmapStep[] {
+export function buildRoadmap(p: Profile, targetIds: string[], catalog: Catalog, lang: Lang = "ru"): RoadmapStep[] {
+  const a = A(lang);
   const steps: RoadmapStep[] = [];
   const targets = catalog.universities.filter((u) => targetIds.includes(u.id));
 
   if (!targets.length) {
     steps.push({
       id: "pick-target",
-      title: "Выбери 3–5 университетов-целей",
-      detail: "Без цели карта будет общей. Отметь вузы в разделе «Университеты» — план подстроится под их требования.",
+      title: a.pickTargets,
+      detail: a.pickTargetsText,
       category: "Профиль",
       href: "/universities",
     });
@@ -280,7 +288,7 @@ export function buildRoadmap(p: Profile, targetIds: string[], catalog: Catalog):
   // Берём самые строгие требования среди выбранных вузов.
   const worst = new Map<string, { row: GapRow; uni: University }>();
   for (const u of targets) {
-    for (const row of gapAnalysis(p, u)) {
+    for (const row of gapAnalysis(p, u, lang)) {
       if (row.status === "ok") continue;
       const prev = worst.get(row.key);
       if (!prev || (row.status === "missing" && prev.row.status !== "missing")) worst.set(row.key, { row, uni: u });
@@ -300,15 +308,15 @@ export function buildRoadmap(p: Profile, targetIds: string[], catalog: Catalog):
   if (sat) steps.push({ id: "sat", title: `SAT ${sat.row.need}`, detail: sat.row.advice, due: inMonths(4), category: "Экзамен", href: "/gap" });
   const research = worst.get("research");
   if (research)
-    steps.push({ id: "research", title: "Исследовательский проект по своей теме", detail: research.row.advice, due: inMonths(5), category: "Проект", href: "/mentor" });
+    steps.push({ id: "research", title: a.researchStep, detail: research.row.advice, due: inMonths(5), category: "Проект", href: "/mentor" });
   const act = worst.get("activities");
-  if (act) steps.push({ id: "activity", title: "Долгосрочная внеклассная активность", detail: act.row.advice, category: "Проект", href: "/portfolio" });
+  if (act) steps.push({ id: "activity", title: a.activityStep, detail: act.row.advice, category: "Проект", href: "/portfolio" });
 
-  for (const m of rankOpportunities(p, catalog.opportunities).slice(0, 4)) {
+  for (const m of rankOpportunities(p, catalog.opportunities, lang).slice(0, 4)) {
     steps.push({
       id: `opp-${m.opportunity.id}`,
       title: m.opportunity.title,
-      detail: `${m.opportunity.type} · ${m.reasons.slice(0, 2).join(" · ")}`,
+      detail: `${tv(m.opportunity.type, lang)} · ${m.reasons.slice(0, 2).join(" · ")}`,
       due: m.opportunity.deadline,
       category: "Возможность",
       href: "/opportunities",
@@ -316,9 +324,41 @@ export function buildRoadmap(p: Profile, targetIds: string[], catalog: Catalog):
   }
 
   for (const u of targets) {
-    steps.push({ id: `apply-${u.id}`, title: `Подача в ${u.name}`, detail: `${u.country}, ${u.city}`, due: u.deadline, category: "Подача", href: "/universities" });
+    steps.push({ id: `apply-${u.id}`, title: fmt(a.applyTo, { uni: u.name }), detail: `${tv(u.country, lang)}, ${u.city}`, due: u.deadline, category: "Подача", href: "/universities" });
   }
 
   // Шаги без даты («выбери цели», «начни активность») — первыми: с них всё начинается.
   return steps.sort((a, b) => (a.due ?? "0000").localeCompare(b.due ?? "0000"));
+}
+
+// ---------- Ближайшие события: дедлайны возможностей из плана, подачи в вузы-цели, экзамены ----------
+
+export type UpcomingEvent = { id: string; date: string; title: string; kind: string; startPrep?: string; href: string; uni?: string };
+
+function minusWeeks(iso: string, weeks: number) {
+  const d = new Date(iso);
+  d.setDate(d.getDate() - weeks * 7);
+  return d.toISOString().slice(0, 10);
+}
+
+export function upcomingEvents(
+  p: Profile,
+  state: { targets: string[]; savedOpportunities: string[] },
+  catalog: Catalog,
+  lang: Lang = "ru",
+): UpcomingEvent[] {
+  const apply = getDict(lang).app.cal.apply;
+  return [
+    ...catalog.opportunities
+      .filter((o) => state.savedOpportunities.includes(o.id))
+      .map((o) => ({ id: o.id, date: o.deadline, title: o.title, kind: o.type, startPrep: minusWeeks(o.deadline, o.prepWeeks), href: "/opportunities" })),
+    ...catalog.universities
+      .filter((u) => state.targets.includes(u.id))
+      .map((u) => ({ id: `uni-${u.id}`, date: u.deadline, title: fmt(apply, { uni: u.name }), uni: u.name, kind: "Подача", startPrep: minusWeeks(u.deadline, 12), href: "/universities" })),
+    ...buildRoadmap(p, state.targets, catalog, lang)
+      .filter((s) => s.category === "Экзамен" && s.due)
+      .map((s) => ({ id: s.id, date: s.due!, title: s.title, kind: "Экзамен", startPrep: minusWeeks(s.due!, 10), href: "/gap" })),
+  ]
+    .filter((e) => daysUntil(e.date) > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
 }

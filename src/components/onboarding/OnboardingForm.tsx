@@ -24,22 +24,15 @@ import {
   type Language,
   type Profile,
 } from "@/lib/profile";
+import { fmt } from "@/lib/i18n";
+import { useT } from "@/lib/i18n/client";
 import { flushSave, updateState, useAuth } from "@/lib/store";
 import { Chips, Field, RepeatList, Section, Select, TextArea, TextInput } from "./fields";
 
 const STORAGE_KEY = "sbs-onboarding-draft";
 
-const SECTIONS = [
-  { id: "basic", title: "О себе" },
-  { id: "school", title: "Учёба" },
-  { id: "languages", title: "Языки и экзамены" },
-  { id: "interests", title: "Интересы и навыки" },
-  { id: "achievements", title: "Достижения" },
-  { id: "activities", title: "Внеклассная активность" },
-  { id: "goals", title: "Цели поступления" },
-  { id: "mbti", title: "Тип личности (MBTI)" },
-  { id: "extra", title: "Что-то ещё" },
-];
+// Названия разделов — в словаре (app.onb.sections), в том же порядке.
+const SECTIONS = ["basic", "school", "languages", "interests", "achievements", "activities", "goals", "mbti", "extra"];
 
 const cardGrid = "grid gap-3 sm:grid-cols-2";
 
@@ -50,6 +43,7 @@ export default function OnboardingForm() {
   const [errors, setErrors] = useState<string[]>([]);
   const router = useRouter();
   const auth = useAuth();
+  const o = useT().app.onb;
 
   // Черновик хранится в браузере, чтобы ответы не пропали при перезагрузке.
   useEffect(() => {
@@ -81,10 +75,10 @@ export default function OnboardingForm() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const missing: string[] = [];
-    if (!profile.fullName.trim()) missing.push("Имя и фамилия");
-    if (!profile.grade) missing.push("Класс");
-    if (profile.interests.length === 0) missing.push("Хотя бы один интерес");
-    if (profile.targetCountries.length === 0) missing.push("Хотя бы одна страна для поступления");
+    if (!profile.fullName.trim()) missing.push(o.missing.name);
+    if (!profile.grade) missing.push(o.missing.grade);
+    if (profile.interests.length === 0) missing.push(o.missing.interest);
+    if (profile.targetCountries.length === 0) missing.push(o.missing.country);
     setErrors(missing);
     if (missing.length === 0) {
       updateState({ profile });
@@ -101,13 +95,13 @@ export default function OnboardingForm() {
     <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
       <nav className="hidden lg:block">
         <ol className="sticky top-6 grid gap-1 text-sm">
-          {SECTIONS.map((s, i) => (
-            <li key={s.id}>
+          {SECTIONS.map((id, i) => (
+            <li key={id}>
               <a
-                href={`#${s.id}`}
+                href={`#${id}`}
                 className="block rounded-md px-3 py-1.5 text-slate-600 hover:bg-white hover:text-blue-700"
               >
-                {i + 1}. {s.title}
+                {i + 1}. {o.sections[i]}
               </a>
             </li>
           ))}
@@ -116,13 +110,13 @@ export default function OnboardingForm() {
 
       <form onSubmit={handleSubmit} className="grid gap-6">
         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 sm:p-6">
-          <h2 className="font-semibold text-blue-950">Есть резюме (CV)? Загрузи его</h2>
+          <h2 className="font-semibold text-blue-950">{o.cvTitle}</h2>
           <p className="mt-1 text-sm text-blue-900/80">
-            ИИ заполнит анкету по резюме, а тебе останется только проверить. Нет резюме — просто заполни поля ниже.
+            {o.cvText}
           </p>
           <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm ring-1 ring-blue-200 hover:bg-blue-100">
             <FileText className="h-4 w-4" />
-            {cvName || "Выбрать файл (PDF, DOCX)"}
+            {cvName || o.cvPick}
             <input
               type="file"
               accept=".pdf,.doc,.docx"
@@ -132,80 +126,80 @@ export default function OnboardingForm() {
           </label>
         </div>
 
-        <Section id="basic" number={1} title="О себе">
+        <Section id="basic" number={1} title={o.sections[0]}>
           <div className={cardGrid}>
-            <Field label="Имя и фамилия" required>
-              <TextInput {...text("fullName")} placeholder="Айгерим Серикова" />
+            <Field label={o.fullName} required>
+              <TextInput {...text("fullName")} placeholder={o.fullNamePh} />
             </Field>
-            <Field label="Дата рождения">
+            <Field label={o.birthDate}>
               <TextInput type="date" {...text("birthDate")} />
             </Field>
-            <Field label="Страна">
+            <Field label={o.country}>
               <TextInput {...text("country")} />
             </Field>
-            <Field label="Город">
-              <TextInput {...text("city")} placeholder="Астана" />
+            <Field label={o.city}>
+              <TextInput {...text("city")} placeholder={o.cityPh} />
             </Field>
           </div>
         </Section>
 
-        <Section id="school" number={2} title="Учёба">
+        <Section id="school" number={2} title={o.sections[1]}>
           <div className={cardGrid}>
-            <Field label="Школа">
-              <TextInput {...text("school")} placeholder="НИШ ФМН Астана" />
+            <Field label={o.school}>
+              <TextInput {...text("school")} placeholder={o.schoolPh} />
             </Field>
-            <Field label="Тип школы">
+            <Field label={o.schoolType}>
               <Select value={profile.schoolType} onChange={(v) => set("schoolType", v)} options={SCHOOL_TYPES} />
             </Field>
-            <Field label="Класс" required>
+            <Field label={o.grade} required>
               <Select value={profile.grade} onChange={(v) => set("grade", v)} options={GRADES} />
             </Field>
-            <Field label="Средний балл (GPA)" hint="В любой системе: 4.8 из 5, 3.9 из 4, 85%">
+            <Field label={o.gpa} hint={o.gpaHint}>
               <TextInput {...text("gpa")} placeholder="4.8 / 5" />
             </Field>
           </div>
-          <Field group label="Любимые предметы">
+          <Field group label={o.favorite}>
             <Chips options={SUBJECTS} value={profile.favoriteSubjects} onChange={(v) => set("favoriteSubjects", v)} />
           </Field>
-          <Field group label="Какие предметы даются сложнее всего?">
+          <Field group label={o.hard}>
             <Chips options={SUBJECTS} value={profile.hardSubjects} onChange={(v) => set("hardSubjects", v)} />
           </Field>
         </Section>
 
-        <Section id="languages" number={3} title="Языки и экзамены" hint="Укажи уровень каждого языка и сданные или запланированные экзамены">
-          <Field group label="Языки">
+        <Section id="languages" number={3} title={o.sections[2]} hint={o.langsHint}>
+          <Field group label={o.langs}>
             <RepeatList<Language>
               items={profile.languages}
               onChange={(v) => set("languages", v)}
               empty={{ name: "", level: "" }}
-              addLabel="Добавить язык"
+              addLabel={o.addLang}
               render={(item, update) => (
                 <div className={cardGrid}>
-                  <TextInput value={item.name} onChange={(e) => update({ name: e.target.value })} placeholder="Немецкий" />
-                  <Select value={item.level} onChange={(v) => update({ level: v })} options={LANGUAGE_LEVELS} placeholder="Уровень" />
+                  <TextInput value={item.name} onChange={(e) => update({ name: e.target.value })} placeholder={o.langPh} />
+                  <Select value={item.level} onChange={(v) => update({ level: v })} options={LANGUAGE_LEVELS} placeholder={o.level} />
                 </div>
               )}
             />
           </Field>
-          <Field group label="Экзамены (IELTS, SAT и др.)">
+          <Field group label={o.exams}>
             <RepeatList<ExamScore>
               items={profile.exams}
               onChange={(v) => set("exams", v)}
               empty={{ exam: "", status: "planned", score: "" }}
-              addLabel="Добавить экзамен"
+              addLabel={o.addExam}
               render={(item, update) => (
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Select value={item.exam} onChange={(v) => update({ exam: v })} options={EXAMS} placeholder="Экзамен" />
+                  <Select value={item.exam} onChange={(v) => update({ exam: v })} options={EXAMS} placeholder={o.exam} />
                   <Select
-                    value={item.status === "done" ? "Уже сдан" : "Планирую"}
-                    onChange={(v) => update({ status: v === "Уже сдан" ? "done" : "planned" })}
-                    options={["Уже сдан", "Планирую"]}
-                    placeholder="Статус"
+                    value={item.status === "done" ? o.passed : o.planning}
+                    onChange={(v) => update({ status: v === o.passed ? "done" : "planned" })}
+                    options={[o.passed, o.planning]}
+                    placeholder={o.status}
                   />
                   <TextInput
                     value={item.score}
                     onChange={(e) => update({ score: e.target.value })}
-                    placeholder={item.status === "done" ? "Балл" : "Целевой балл"}
+                    placeholder={item.status === "done" ? o.score : o.targetScore}
                   />
                 </div>
               )}
@@ -213,69 +207,69 @@ export default function OnboardingForm() {
           </Field>
         </Section>
 
-        <Section id="interests" number={4} title="Интересы и навыки" hint="Выбери всё, что тебе действительно интересно — от этого зависят подобранные возможности">
-          <Field group label="Что тебе интересно?" required>
+        <Section id="interests" number={4} title={o.sections[3]} hint={o.interestsHint}>
+          <Field group label={o.interests} required>
             <Chips options={INTERESTS} value={profile.interests} onChange={(v) => set("interests", v)} />
           </Field>
-          <Field label="Что ты уже умеешь?" hint="Языки программирования, инструменты, soft skills: Python, Figma, публичные выступления…">
+          <Field label={o.skills} hint={o.skillsHint}>
             <TextArea {...text("skills")} />
           </Field>
-          <Field label="Хобби и увлечения">
-            <TextArea {...text("hobbies")} placeholder="Чем занимаешься в свободное время?" />
+          <Field label={o.hobbies}>
+            <TextArea {...text("hobbies")} placeholder={o.hobbiesPh} />
           </Field>
         </Section>
 
-        <Section id="achievements" number={5} title="Достижения" hint="Олимпиады, конкурсы, хакатоны, научные проекты, сертификаты">
+        <Section id="achievements" number={5} title={o.sections[4]} hint={o.achievementsHint}>
           <RepeatList<Achievement>
             items={profile.achievements}
             onChange={(v) => set("achievements", v)}
             empty={{ title: "", level: "", result: "", year: "" }}
-            addLabel="Добавить достижение"
+            addLabel={o.addAchievement}
             render={(item, update) => (
               <div className={cardGrid}>
-                <TextInput value={item.title} onChange={(e) => update({ title: e.target.value })} placeholder="Название (олимпиада по физике)" />
-                <Select value={item.level} onChange={(v) => update({ level: v })} options={ACHIEVEMENT_LEVELS} placeholder="Уровень" />
-                <TextInput value={item.result} onChange={(e) => update({ result: e.target.value })} placeholder="Результат (2 место, финалист…)" />
-                <TextInput value={item.year} onChange={(e) => update({ year: e.target.value })} placeholder="Год" inputMode="numeric" />
+                <TextInput value={item.title} onChange={(e) => update({ title: e.target.value })} placeholder={o.achTitle} />
+                <Select value={item.level} onChange={(v) => update({ level: v })} options={ACHIEVEMENT_LEVELS} placeholder={o.level} />
+                <TextInput value={item.result} onChange={(e) => update({ result: e.target.value })} placeholder={o.achResult} />
+                <TextInput value={item.year} onChange={(e) => update({ year: e.target.value })} placeholder={o.year} inputMode="numeric" />
               </div>
             )}
           />
         </Section>
 
-        <Section id="activities" number={6} title="Внеклассная активность" hint="Клубы, волонтёрство, работа, свои проекты, спорт — всё, чем ты занимаешься вне уроков">
+        <Section id="activities" number={6} title={o.sections[5]} hint={o.activitiesHint}>
           <RepeatList<Activity>
             items={profile.activities}
             onChange={(v) => set("activities", v)}
             empty={{ role: "", organization: "", description: "", hoursPerWeek: "" }}
-            addLabel="Добавить активность"
+            addLabel={o.addActivity}
             render={(item, update) => (
               <div className="grid gap-3">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <TextInput value={item.role} onChange={(e) => update({ role: e.target.value })} placeholder="Роль (основатель, участник…)" />
-                  <TextInput value={item.organization} onChange={(e) => update({ organization: e.target.value })} placeholder="Где (клуб, организация)" />
-                  <TextInput value={item.hoursPerWeek} onChange={(e) => update({ hoursPerWeek: e.target.value })} placeholder="Часов в неделю" inputMode="numeric" />
+                  <TextInput value={item.role} onChange={(e) => update({ role: e.target.value })} placeholder={o.role} />
+                  <TextInput value={item.organization} onChange={(e) => update({ organization: e.target.value })} placeholder={o.org} />
+                  <TextInput value={item.hoursPerWeek} onChange={(e) => update({ hoursPerWeek: e.target.value })} placeholder={o.hours} inputMode="numeric" />
                 </div>
-                <TextArea value={item.description} onChange={(e) => update({ description: e.target.value })} rows={2} placeholder="Что ты там делаешь и чего добился(ась)?" />
+                <TextArea value={item.description} onChange={(e) => update({ description: e.target.value })} rows={2} placeholder={o.actDesc} />
               </div>
             )}
           />
         </Section>
 
-        <Section id="goals" number={7} title="Цели поступления">
-          <Field group label="В каких странах хочешь учиться?" required>
+        <Section id="goals" number={7} title={o.sections[6]}>
+          <Field group label={o.countries} required>
             <Chips options={COUNTRIES} value={profile.targetCountries} onChange={(v) => set("targetCountries", v)} />
           </Field>
-          <Field group label="Какие направления рассматриваешь?">
+          <Field group label={o.majors}>
             <Chips options={MAJORS} value={profile.targetMajors} onChange={(v) => set("targetMajors", v)} />
           </Field>
-          <Field label="Университеты мечты" hint="Если уже есть на примете — через запятую">
+          <Field label={o.dream} hint={o.dreamHint}>
             <TextInput {...text("dreamUniversities")} placeholder="TU Munich, NUS, University of Toronto" />
           </Field>
           <div className={cardGrid}>
-            <Field label="Финансирование">
+            <Field label={o.budget}>
               <Select value={profile.budget} onChange={(v) => set("budget", v)} options={BUDGETS} />
             </Field>
-            <Field label="Год поступления">
+            <Field label={o.admissionYear}>
               <Select
                 value={profile.admissionYear}
                 onChange={(v) => set("admissionYear", v)}
@@ -285,18 +279,18 @@ export default function OnboardingForm() {
           </div>
         </Section>
 
-        <Section id="mbti" number={8} title="Тип личности (MBTI)" hint="Помогает ИИ подобрать подходящие направления и формат активностей">
+        <Section id="mbti" number={8} title={o.sections[7]} hint={o.mbtiHint}>
           <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
-            Не знаешь свой тип? Пройди бесплатный тест (~10 минут) и вернись сюда:{" "}
+            {o.mbtiText}{" "}
             <a
               href={MBTI_TEST_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium text-blue-700 underline underline-offset-2 hover:text-blue-900"
             >
-              пройти тест на 16personalities.com ↗
+              {o.mbtiLink}
             </a>
-            <p className="mt-1 text-xs text-slate-500">Ответы в этой анкете сохраняются автоматически, так что ничего не пропадёт.</p>
+            <p className="mt-1 text-xs text-slate-500">{o.mbtiSaved}</p>
           </div>
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
             {MBTI_TYPES.map((t) => (
@@ -316,25 +310,25 @@ export default function OnboardingForm() {
           </div>
         </Section>
 
-        <Section id="extra" number={9} title="Что-то ещё">
-          <Field label="Что ещё нам стоит о тебе знать?" hint="Мечты, сомнения, вопросы о поступлении — всё, что поможет ИИ лучше тебя понять">
+        <Section id="extra" number={9} title={o.sections[8]}>
+          <Field label={o.about} hint={o.aboutHint}>
             <TextArea {...text("about")} rows={4} />
           </Field>
         </Section>
 
         {errors.length > 0 && (
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
-            Заполни, пожалуйста: {errors.join(", ")}.
+            {fmt(o.fill, { list: errors.join(", ") })}
           </div>
         )}
 
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">Черновик сохраняется автоматически.</p>
+          <p className="text-sm text-slate-500">{o.draft}</p>
           <button
             type="submit"
             className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-blue-700"
           >
-            Сохранить и перейти к карте развития →
+            {o.submit}
           </button>
         </div>
       </form>

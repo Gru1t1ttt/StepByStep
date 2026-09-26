@@ -16,3 +16,8 @@ const DICTS: Record<Lang, Dict> = { kz, ru, en };
 
 export const isLang = (v: unknown): v is Lang => typeof v === "string" && (LANGS as readonly string[]).includes(v);
 export const getDict = (lang: Lang) => DICTS[lang];
+
+// Подстановка в строку словаря: fmt("осталось {n} дн.", { n: 3 })
+export function fmt(text: string, params: Record<string, string | number> = {}) {
+  return text.replace(/\{(\w+)\}/g, (m, k) => (k in params ? String(params[k]) : m));
+}

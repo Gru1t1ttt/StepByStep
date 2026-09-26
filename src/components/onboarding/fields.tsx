@@ -2,6 +2,8 @@
 
 import { X } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useLang, useT } from "@/lib/i18n/client";
+import { tv } from "@/lib/i18n/values";
 
 const inputClass =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
@@ -75,19 +77,21 @@ export function Select({
   value,
   onChange,
   options,
-  placeholder = "Выберите…",
+  placeholder,
 }: {
   value: string;
   onChange: (value: string) => void;
   options: string[];
   placeholder?: string;
 }) {
+  const lang = useLang();
+  const choose = useT().app.onb.choose;
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
-      <option value="">{placeholder}</option>
+      <option value="">{placeholder ?? choose}</option>
       {options.map((o) => (
         <option key={o} value={o}>
-          {o}
+          {tv(o, lang)}
         </option>
       ))}
     </select>
@@ -107,6 +111,8 @@ export function Chips({
   allowCustom?: boolean;
 }) {
   const [custom, setCustom] = useState("");
+  const lang = useLang();
+  const t = useT().app;
   const all = [...options, ...value.filter((v) => !options.includes(v))];
 
   const toggle = (item: string) =>
@@ -134,7 +140,7 @@ export function Chips({
                   : "border-slate-300 bg-white text-slate-700 hover:border-blue-400"
               }`}
             >
-              {item}
+              {tv(item, lang)}
             </button>
           );
         })}
@@ -150,7 +156,7 @@ export function Chips({
                 addCustom();
               }
             }}
-            placeholder="Свой вариант"
+            placeholder={t.onb.custom}
             className={inputClass}
           />
           <button
@@ -158,7 +164,7 @@ export function Chips({
             onClick={addCustom}
             className="shrink-0 rounded-lg border border-slate-300 px-3 text-sm text-slate-700 hover:bg-slate-50"
           >
-            Добавить
+            {t.common.add}
           </button>
         </div>
       )}
@@ -180,6 +186,7 @@ export function RepeatList<T>({
   addLabel: string;
   render: (item: T, update: (patch: Partial<T>) => void) => ReactNode;
 }) {
+  const deleteLabel = useT().app.common.delete;
   return (
     <div className="grid gap-3">
       {items.map((item, i) => (
@@ -188,7 +195,7 @@ export function RepeatList<T>({
           <button
             type="button"
             onClick={() => onChange(items.filter((_, j) => j !== i))}
-            aria-label="Удалить"
+            aria-label={deleteLabel}
             className="absolute right-2 top-2 rounded-md px-2 py-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
           >
             <X className="h-4 w-4" />

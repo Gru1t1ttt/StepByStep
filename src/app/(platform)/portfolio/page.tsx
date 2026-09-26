@@ -1,6 +1,8 @@
 "use client";
 
-import { useT } from "@/lib/i18n/client";
+import { fmt } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n/client";
+import { tv } from "@/lib/i18n/values";
 import { Award, Code2, FlaskConical, HeartHandshake, Paperclip, Trophy, X, type LucideIcon } from "lucide-react";
 
 import { useState, type FormEvent } from "react";
@@ -54,7 +56,10 @@ function fromProfile(p: Profile): PortfolioItem[] {
 }
 
 export default function PortfolioPage() {
-  const tc = useT().cabinet;
+  const t = useT();
+  const tc = t.cabinet;
+  const pf = t.app.portfolio;
+  const lang = useLang();
   const [draft, setDraft] = useState(emptyItem);
   const [open, setOpen] = useState(false);
 
@@ -79,10 +84,10 @@ export default function PortfolioPage() {
               action={
                 <div className="flex gap-2 print:hidden">
                   <button type="button" onClick={() => window.print()} className={ghostButtonClass}>
-                    Версия для печати / PDF
+                    {pf.print}
                   </button>
                   <button type="button" onClick={() => setOpen((v) => !v)} className={buttonClass}>
-                    + Добавить
+                    {pf.add}
                   </button>
                 </div>
               }
@@ -90,9 +95,9 @@ export default function PortfolioPage() {
 
             {imported.length > 0 && (
               <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 border-blue-200 bg-blue-50 print:hidden">
-                <p className="text-sm text-blue-900">В анкете есть {imported.length} достижений и активностей, которых нет в портфолио.</p>
+                <p className="text-sm text-blue-900">{fmt(pf.fromProfile, { n: imported.length })}</p>
                 <button type="button" onClick={() => updateState((s) => ({ portfolio: [...s.portfolio, ...imported] }))} className={buttonClass}>
-                  Перенести из анкеты
+                  {pf.import}
                 </button>
               </Card>
             )}
@@ -102,30 +107,32 @@ export default function PortfolioPage() {
                 <form onSubmit={add} className="grid gap-3 sm:grid-cols-2">
                   <select value={draft.kind} onChange={(e) => setDraft({ ...draft, kind: e.target.value as PortfolioItem["kind"] })} className={input}>
                     {KINDS.map((k) => (
-                      <option key={k}>{k}</option>
+                      <option key={k} value={k}>
+                        {tv(k, lang)}
+                      </option>
                     ))}
                   </select>
-                  <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="Название *" className={input} required />
+                  <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder={pf.title} className={input} required />
                   <textarea
                     value={draft.description}
                     onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                    placeholder="Что сделал(а) и какой результат? Цифры приветствуются"
+                    placeholder={pf.description}
                     className={`${input} sm:col-span-2`}
                     rows={2}
                   />
-                  <input value={draft.link} onChange={(e) => setDraft({ ...draft, link: e.target.value })} placeholder="Ссылка (GitHub, сайт, публикация)" className={input} />
-                  <input value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} placeholder="Когда (например, май 2026)" className={input} />
+                  <input value={draft.link} onChange={(e) => setDraft({ ...draft, link: e.target.value })} placeholder={pf.link} className={input} />
+                  <input value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} placeholder={pf.date} className={input} />
                   <label className={`${ghostButtonClass} cursor-pointer sm:col-span-2`}>
                     <Paperclip className="h-4 w-4" />
-                    {draft.fileName || "Прикрепить файл (диплом, сертификат)"}
+                    {draft.fileName || pf.file}
                     <input type="file" className="hidden" onChange={(e) => setDraft({ ...draft, fileName: e.target.files?.[0]?.name ?? "" })} />
                   </label>
                   <div className="flex gap-2 sm:col-span-2">
                     <button type="submit" className={buttonClass}>
-                      Сохранить
+                      {t.app.common.save}
                     </button>
                     <button type="button" onClick={() => setOpen(false)} className={ghostButtonClass}>
-                      Отмена
+                      {t.app.common.cancel}
                     </button>
                   </div>
                 </form>
@@ -133,7 +140,7 @@ export default function PortfolioPage() {
             )}
 
             {state.portfolio.length === 0 ? (
-              <Card className="text-center text-slate-500">Портфолио пока пустое. Добавь первое достижение или проект.</Card>
+              <Card className="text-center text-slate-500">{pf.empty}</Card>
             ) : (
               <div className="grid gap-6">
                 {KINDS.map((kind) => {
@@ -143,7 +150,7 @@ export default function PortfolioPage() {
                   return (
                     <section key={kind}>
                       <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-slate-950">
-                        <KindIcon className="h-5 w-5 text-blue-600" strokeWidth={1.8} /> {kind} <span className="text-slate-400">({items.length})</span>
+                        <KindIcon className="h-5 w-5 text-blue-600" strokeWidth={1.8} /> {tv(kind, lang)} <span className="text-slate-400">({items.length})</span>
                       </h2>
                       <div className="grid gap-3 md:grid-cols-2">
                         {items.map((i) => (
@@ -159,13 +166,13 @@ export default function PortfolioPage() {
                               )}
                               {i.link && (
                                 <a href={i.link} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 underline">
-                                  ссылка ↗
+                                  {pf.linkOut}
                                 </a>
                               )}
                             </div>
                             <button
                               type="button"
-                              aria-label="Удалить"
+                              aria-label={t.app.common.delete}
                               onClick={() => updateState((s) => ({ portfolio: s.portfolio.filter((p) => p.id !== i.id) }))}
                               className="absolute right-3 top-3 rounded px-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 print:hidden"
                             >

@@ -1,3 +1,4 @@
+import appKz from "./app-kz";
 import type { Dict } from "./ru";
 
 const kz: Dict = {
@@ -269,6 +270,7 @@ const kz: Dict = {
       fillProfile: "Сауалнаманы толтыру",
     },
   },
+  app: appKz,
   login: {
     title: "Қош келдің",
     subtitle: "Аккаунт профиліңді, жоспарың мен портфолиоңды сақтайды — кез келген құрылғыда.",

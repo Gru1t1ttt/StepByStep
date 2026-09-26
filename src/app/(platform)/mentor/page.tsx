@@ -2,7 +2,8 @@
 
 import { MessageCircle } from "lucide-react";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { buildRoadmap, gapAnalysis, rankOpportunities, type Catalog } from "@/lib/analysis";
 import type { Profile } from "@/lib/profile";
 import { useLang, useT } from "@/lib/i18n/client";
@@ -10,13 +11,6 @@ import { updateState, type ChatMessage, type ChatSource, type PlatformState } fr
 import { supabase } from "@/lib/supabase";
 import Markdown from "@/components/platform/Markdown";
 import { Card, PageHeader, WithProfile, buttonClass, ghostButtonClass } from "@/components/platform/ui";
-
-const SUGGESTIONS = [
-  "Что мне сделать на этой неделе?",
-  "Предложи идеи проектов по моим интересам — от простого к исследованию",
-  "Чего мне больше всего не хватает для поступления?",
-  "Как подготовиться к IELTS за 3 месяца?",
-];
 
 // Всё, что ИИ должен знать об ученике, чтобы не начинать каждый раз с нуля.
 function buildContext(profile: Profile, state: PlatformState, catalog: Catalog) {
@@ -39,6 +33,7 @@ function buildContext(profile: Profile, state: PlatformState, catalog: Catalog) 
 }
 
 function Sources({ sources }: { sources: ChatSource[] }) {
+  const c = useT().app.common;
   return (
     <div className="mt-1.5 grid gap-1 pl-1 text-xs text-slate-500">
       {sources.map((s) => (
@@ -46,10 +41,10 @@ function Sources({ sources }: { sources: ChatSource[] }) {
           <span className="font-semibold text-slate-700">[{s.n}]</span> {s.kind}: {s.title}
           {s.outcome && ` · ${s.outcome}`}
           {s.year && ` · ${s.year}`}
-          {s.demo && <span className="ml-1 rounded bg-amber-100 px-1 text-amber-800">демо</span>}
+          {s.demo && <span className="ml-1 rounded bg-amber-100 px-1 text-amber-800">{c.demo}</span>}
           {s.sourceUrl && (
             <a href={s.sourceUrl} target="_blank" rel="noopener noreferrer" className="ml-1 text-blue-700 underline">
-              ссылка
+              {c.link}
             </a>
           )}
         </div>
@@ -60,6 +55,10 @@ function Sources({ sources }: { sources: ChatSource[] }) {
 
 function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformState; catalog: Catalog }) {
   const lang = useLang();
+  const m = useT().app.mentor;
+  const params = useSearchParams();
+  const router = useRouter();
+  const asked = useRef(false);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState("");
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
@@ -88,7 +87,7 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
         // Источники из прошлых ответов модели не нужны — отправляем только текст.
         body: JSON.stringify({ messages: messages.map(({ role, content }) => ({ role, content })), context: buildContext(profile, state, catalog), lang }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Не удалось получить ответ. Попробуй ещё раз.");
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? m.failed);
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let raw = "";
@@ -112,7 +111,7 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
         setStreaming(answer);
       }
     } catch (error) {
-      answer = error instanceof TypeError ? "Нет соединения с сервером. Проверь интернет и попробуй снова." : (error as Error).message;
+      answer = error instanceof TypeError ? m.offline : (error as Error).message;
     }
     // Показываем только те источники, на которые ИИ действительно сослался.
     const cited = sources.filter((src) => answer.includes(`[${src.n}]`));
@@ -121,6 +120,16 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
     setStreamingSources([]);
     setBusy(false);
   };
+
+  // Вопрос, заданный на дашборде (/mentor?q=…), отправляется сразу.
+  useEffect(() => {
+    const q = params.get("q");
+    if (!q || asked.current) return;
+    asked.current = true;
+    router.replace("/mentor");
+    send(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -136,10 +145,10 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
           <div className="flex h-full flex-col items-center justify-center text-center">
             <MessageCircle className="h-10 w-10 text-slate-300" strokeWidth={1.5} />
             <p className="mt-3 max-w-md text-slate-600">
-              Я знаю твой профиль, цели и карту развития. Спроси, что делать дальше, попроси идеи проектов или разбор пробелов.
+              {m.intro}
             </p>
             <div className="mt-5 flex max-w-xl flex-wrap justify-center gap-2">
-              {SUGGESTIONS.map((s) => (
+              {m.suggestions.map((s) => (
                 <button key={s} type="button" onClick={() => send(s)} className="rounded-full border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:border-blue-400">
                   {s}
                 </button>
@@ -148,19 +157,19 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
           </div>
         ) : (
           <div className="grid gap-3">
-            {shown.map((m, i) => (
-              <div key={i} className={`max-w-[85%] ${m.role === "user" ? "ml-auto" : ""}`}>
+            {shown.map((msg, i) => (
+              <div key={i} className={`max-w-[85%] ${msg.role === "user" ? "ml-auto" : ""}`}>
                 <div
                   className={`rounded-2xl px-4 py-2.5 text-sm ${
-                    m.role === "user" ? "whitespace-pre-wrap rounded-br-sm bg-blue-600 text-white" : "rounded-bl-sm border border-slate-200 bg-slate-50 text-slate-800"
+                    msg.role === "user" ? "whitespace-pre-wrap rounded-br-sm bg-blue-600 text-white" : "rounded-bl-sm border border-slate-200 bg-slate-50 text-slate-800"
                   }`}
                 >
-                  {m.role === "user" ? m.content : <Markdown>{m.content}</Markdown>}
+                  {msg.role === "user" ? msg.content : <Markdown>{msg.content}</Markdown>}
                 </div>
-                {m.sources && m.sources.length > 0 && <Sources sources={m.sources} />}
+                {msg.sources && msg.sources.length > 0 && <Sources sources={msg.sources} />}
               </div>
             ))}
-            {busy && !streaming && <div className="w-fit rounded-2xl bg-slate-100 px-4 py-2.5 text-sm text-slate-500">Думаю…</div>}
+            {busy && !streaming && <div className="w-fit rounded-2xl bg-slate-100 px-4 py-2.5 text-sm text-slate-500">{m.thinking}</div>}
             <div ref={bottom} />
           </div>
         )}
@@ -169,11 +178,11 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Спроси наставника…"
+          placeholder={m.placeholder}
           className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
         />
         <button type="submit" disabled={busy || !input.trim()} className={buttonClass}>
-          Отправить
+          {m.send}
         </button>
       </form>
     </div>
@@ -181,7 +190,8 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
 }
 
 export default function MentorPage() {
-  const tc = useT().cabinet;
+  const t = useT();
+  const tc = t.cabinet;
   return (
     <WithProfile>
       {(profile, state, catalog) => (
@@ -192,12 +202,14 @@ export default function MentorPage() {
             action={
               state.chat.length > 0 && (
                 <button type="button" onClick={() => updateState({ chat: [] })} className={ghostButtonClass}>
-                  Новый диалог
+                  {t.app.mentor.newChat}
                 </button>
               )
             }
           />
-          <Chat profile={profile} state={state} catalog={catalog} />
+          <Suspense>
+            <Chat profile={profile} state={state} catalog={catalog} />
+          </Suspense>
         </div>
       )}
     </WithProfile>

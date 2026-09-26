@@ -30,6 +30,7 @@ export type PlatformState = {
   targets: string[]; // id университетов
   savedOpportunities: string[];
   doneSteps: string[];
+  doneLog?: Record<string, string>; // шаг → дата выполнения (для серии недель на дашборде)
   portfolio: PortfolioItem[];
   chat: ChatMessage[];
 };
@@ -42,6 +43,7 @@ const initial: PlatformState = {
   targets: [],
   savedOpportunities: [],
   doneSteps: [],
+  doneLog: {},
   portfolio: [],
   chat: [],
 };
@@ -197,4 +199,33 @@ export function useAuth(): AuthState {
 
 export function toggleIn(list: string[], id: string) {
   return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+}
+
+// Отметить шаг плана выполненным (или снять отметку) — с датой, чтобы считать серию недель.
+export function toggleStep(id: string) {
+  updateState((s) => {
+    const log = { ...(s.doneLog ?? {}) };
+    if (s.doneSteps.includes(id)) delete log[id];
+    else log[id] = new Date().toISOString().slice(0, 10);
+    return { doneSteps: toggleIn(s.doneSteps, id), doneLog: log };
+  });
+}
+
+// Сколько недель подряд (включая текущую или прошлую) ученик отмечал шаги плана.
+export function weekStreak(log: Record<string, string> = {}) {
+  const week = (d: Date) => {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = (t.getUTCDay() + 6) % 7; // понедельник = 0
+    t.setUTCDate(t.getUTCDate() - day);
+    return t.toISOString().slice(0, 10);
+  };
+  const weeks = new Set(Object.values(log).map((d) => week(new Date(d))));
+  const cursor = new Date();
+  if (!weeks.has(week(cursor))) cursor.setDate(cursor.getDate() - 7); // эта неделя ещё не закончилась
+  let n = 0;
+  while (weeks.has(week(cursor))) {
+    n++;
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return n;
 }

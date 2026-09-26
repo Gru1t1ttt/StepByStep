@@ -7,18 +7,15 @@ import type { ReactNode } from "react";
 import type { Profile } from "@/lib/profile";
 import type { Catalog } from "@/lib/analysis";
 import { useCatalog } from "@/lib/catalog";
-import { useLang, useT } from "@/lib/i18n/client";
+import { useT } from "@/lib/i18n/client";
 import { useAuth, usePlatform, type PlatformState } from "@/lib/store";
 
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
-  const lang = useLang();
-  const t = useT().cabinet;
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
         {subtitle && <p className="mt-1 max-w-2xl text-slate-600">{subtitle}</p>}
-        {lang !== "ru" && <p className="mt-1 text-xs text-slate-400">{t.note}</p>}
       </div>
       {action}
     </div>
