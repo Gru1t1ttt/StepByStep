@@ -20,12 +20,11 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 import IntroAnimation from "@/components/landing/IntroAnimation";
+import Orbit from "@/components/landing/Orbit";
 import PlatformTabs from "@/components/landing/PlatformTabs";
 import Header from "@/components/site/Header";
 import Logo from "@/components/site/Logo";
 import { PLANS, PLAN_FEATURES, SITE, formatTenge } from "@/lib/site";
-
-const STAIRS = ["Интересы", "Проекты", "Олимпиады", "Портфолио", "Оффер"];
 
 const STEPS = [
   { title: "Расскажи о себе", text: "Одна анкета или загрузка CV, плюс тест MBTI. Интересы, предметы, достижения, активности." },
@@ -146,7 +145,7 @@ const FAQ: Faq[] = [
         </p>
         <p>
           Можно в любой момент попросить удалить аккаунт и все данные. Подробнее — в{" "}
-          <Link href="/privacy" className="font-medium text-blue-700 underline">
+          <Link href="/privacy" className="font-medium underline">
             политике конфиденциальности
           </Link>
           .
@@ -169,44 +168,44 @@ const FAQ: Faq[] = [
 ];
 
 export default function Home() {
+  const eyebrow = "font-mono text-xs uppercase tracking-[0.2em] text-amber-300/80";
+  const h2 = "font-display text-3xl font-bold tracking-tight text-white sm:text-4xl";
+  const card = "rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-sm";
+
   return (
-    <>
+    <div className="relative overflow-x-clip bg-[#060a16] text-slate-300">
+      {/* мягкие световые пятна — плавные переходы между секциями вместо резких блоков */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute left-1/2 top-[70vh] h-[900px] w-[1200px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(59,108,255,0.18),transparent)]" />
+        <div className="absolute -left-60 top-[210vh] h-[800px] w-[800px] rounded-full bg-[radial-gradient(closest-side,rgba(251,191,36,0.08),transparent)]" />
+        <div className="absolute -right-60 top-[330vh] h-[900px] w-[900px] rounded-full bg-[radial-gradient(closest-side,rgba(59,108,255,0.14),transparent)]" />
+        <div className="absolute left-1/2 top-[470vh] h-[900px] w-[1100px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(251,191,36,0.07),transparent)]" />
+      </div>
+
       <IntroAnimation />
       <Header />
-      <main className="flex-1">
-        {/* Hero */}
-        <section id="start" className="relative scroll-mt-16 overflow-hidden">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.12),transparent_65%)]" />
-          <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-14 text-center sm:px-6 sm:pt-20">
-            <div className="mx-auto flex h-40 max-w-xl items-end justify-center gap-2 sm:h-52 sm:gap-3">
-              {STAIRS.map((s, i) => (
-                <div
-                  key={s}
-                  className={`flex flex-1 items-start justify-center rounded-t-2xl pt-3 text-[10px] font-semibold sm:text-xs ${
-                    i === STAIRS.length - 1 ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-800"
-                  }`}
-                  style={{ height: `${20 + i * 20}%` }}
-                >
-                  {s}
-                </div>
-              ))}
-            </div>
 
-            <h1 className="mx-auto mt-10 max-w-4xl font-display text-4xl font-bold leading-[1.05] tracking-tight text-slate-950 sm:text-6xl">
-              Поступи в университет мечты без страха
-            </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
-              ИИ строит твою персональную карту развития: подбирает возможности, показывает, чего не хватает для выбранных университетов, и ведёт до
-              поступления.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/onboarding" className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700">
-                Начать <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="#platform" className="rounded-xl border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-800 hover:bg-slate-50">
-                Посмотреть платформу
-              </Link>
-            </div>
+      <main className="relative flex-1">
+        {/* Первый экран */}
+        <section id="start" className="relative scroll-mt-24 px-4 pt-16 text-center sm:px-6 sm:pt-24">
+          <p className={eyebrow}>Unilight · EdTech-платформа</p>
+          <h1 className="mx-auto mt-5 max-w-4xl font-display text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl">
+            Поступи в университет мечты <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">без страха</span>
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
+            ИИ строит твою персональную карту развития: подбирает возможности, показывает, чего не хватает для выбранных университетов, и ведёт до
+            поступления.
+          </p>
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
+            <Link href="/onboarding" className="flex items-center gap-2 rounded-full bg-blue-500 px-7 py-3.5 font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:bg-blue-400">
+              Начать <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="#platform" className="rounded-full border border-white/15 bg-white/5 px-7 py-3.5 font-semibold text-white transition hover:bg-white/10">
+              Посмотреть платформу
+            </Link>
+          </div>
+          <div className="mt-6 sm:mt-10">
+            <Orbit />
           </div>
         </section>
 
@@ -218,25 +217,25 @@ export default function Home() {
               ["02", "Куда хочешь прийти", "Университет, страна и направление с реальными требованиями и шансами."],
               ["03", "Что делать дальше", "Понятный следующий шаг каждую неделю, а не хаос из сотни конкурсов."],
             ].map(([n, t, d]) => (
-              <div key={n} className="rounded-3xl border border-slate-200 bg-white p-7">
-                <span className="font-mono text-sm text-blue-600">{n}</span>
-                <h3 className="mt-3 font-display text-xl font-bold text-slate-950">{t}</h3>
-                <p className="mt-2 text-slate-600">{d}</p>
+              <div key={n} className={`${card} p-7`}>
+                <span className="font-mono text-sm text-amber-300">{n}</span>
+                <h3 className="mt-3 font-display text-xl font-bold text-white">{t}</h3>
+                <p className="mt-2 text-slate-400">{d}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Как это работает */}
-        <section id="how" className="scroll-mt-16 bg-slate-950 py-20 text-white">
+        <section id="how" className="scroll-mt-24 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="font-mono text-xs uppercase tracking-wider text-blue-400">— Как это работает</p>
-            <h2 className="mt-3 max-w-2xl font-display text-3xl font-bold sm:text-4xl">Четыре шага от анкеты до оффера</h2>
+            <p className={eyebrow}>— Как это работает</p>
+            <h2 className={`mt-3 max-w-2xl ${h2}`}>Четыре шага от анкеты до оффера</h2>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {STEPS.map((s, i) => (
-                <div key={s.title} className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-display text-sm font-bold">{i + 1}</span>
-                  <h3 className="mt-5 font-display text-lg font-bold">{s.title}</h3>
+                <div key={s.title} className={`${card} p-6`}>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 font-display text-sm font-bold text-white">{i + 1}</span>
+                  <h3 className="mt-5 font-display text-lg font-bold text-white">{s.title}</h3>
                   <p className="mt-2 text-sm text-slate-400">{s.text}</p>
                 </div>
               ))}
@@ -245,32 +244,33 @@ export default function Home() {
         </section>
 
         {/* Платформа */}
-        <section id="platform" className="scroll-mt-16 mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <h2 className="text-center font-display text-3xl font-bold text-slate-950 sm:text-4xl">Загляни внутрь платформы</h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">Шесть инструментов, которые работают вместе и знают о тебе всё нужное.</p>
+        <section id="platform" className="scroll-mt-24 mx-auto max-w-6xl px-4 py-20 sm:px-6">
+          <p className={`text-center ${eyebrow}`}>— Платформа</p>
+          <h2 className={`mt-3 text-center ${h2}`}>Загляни внутрь</h2>
+          <p className="mx-auto mt-3 max-w-xl text-center text-slate-400">Шесть инструментов, которые работают вместе и знают о тебе всё нужное.</p>
           <div className="mt-10">
             <PlatformTabs />
           </div>
         </section>
 
         {/* Одно место вместо десятка вкладок */}
-        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <div className="text-center">
-            <p className="font-mono text-xs uppercase tracking-wider text-blue-600">— Зачем Unilight</p>
-            <h2 className="mx-auto mt-3 max-w-3xl font-display text-3xl font-bold text-slate-950 sm:text-4xl">Одно место вместо десятка вкладок</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+            <p className={eyebrow}>— Зачем Unilight</p>
+            <h2 className={`mx-auto mt-3 max-w-3xl ${h2}`}>Одно место вместо десятка вкладок</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-slate-400">
               Поступление за рубеж — это сотни мелких решений и дедлайнов. Когда информация разбросана, самое важное теряется в шуме.
             </p>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
-            <div className="rounded-3xl border border-slate-200 bg-white p-7">
-              <p className="flex items-center gap-2 font-semibold text-slate-500">
+            <div className={`${card} p-7`}>
+              <p className="flex items-center gap-2 font-semibold text-slate-400">
                 <Layers className="h-5 w-5" /> Как обычно
               </p>
               <ul className="mt-5 grid gap-4">
                 {BEFORE.map(({ icon: Icon, text }) => (
-                  <li key={text} className="flex gap-3 text-slate-600">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                  <li key={text} className="flex gap-3 text-slate-400">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-500">
                       <Icon className="h-4.5 w-4.5" strokeWidth={1.8} />
                     </span>
                     <span className="pt-1.5">{text}</span>
@@ -278,8 +278,8 @@ export default function Home() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-3xl bg-slate-950 p-7 text-white">
-              <p className="flex items-center gap-2 font-semibold">
+            <div className="rounded-3xl border border-amber-300/25 bg-[linear-gradient(145deg,rgba(59,108,255,0.18),rgba(251,191,36,0.08))] p-7 shadow-[0_0_60px_rgba(251,191,36,0.08)]">
+              <p className="flex items-center gap-2 font-semibold text-white">
                 <Compass className="h-5 w-5 text-amber-300" /> С Unilight
               </p>
               <ul className="mt-5 grid gap-4">
@@ -297,39 +297,42 @@ export default function Home() {
         </section>
 
         {/* Тарифы */}
-        <section id="pricing" className="scroll-mt-16 bg-slate-100/70 py-20">
+        <section id="pricing" className="scroll-mt-24 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="text-center font-display text-3xl font-bold text-slate-950 sm:text-4xl">Выбери свой тариф</h2>
-            <p className="mx-auto mt-3 max-w-xl text-center text-slate-600">Во всех тарифах — полный доступ. Чем дольше срок, тем дешевле день подготовки.</p>
+            <p className={`text-center ${eyebrow}`}>— Тарифы</p>
+            <h2 className={`mt-3 text-center ${h2}`}>Выбери свой тариф</h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-slate-400">Во всех тарифах — полный доступ. Чем дольше срок, тем дешевле день подготовки.</p>
 
-            <div className="mt-10 grid items-stretch gap-4 lg:grid-cols-3">
+            <div className="mt-12 grid items-stretch gap-4 lg:grid-cols-3">
               {PLANS.map((p) => (
                 <div
                   key={p.id}
-                  className={`relative flex flex-col rounded-3xl border bg-white p-7 ${
-                    p.recommended ? "border-blue-600 shadow-2xl shadow-blue-600/15 ring-4 ring-blue-600/10 lg:-my-3 lg:py-10" : "border-slate-200"
+                  className={`relative flex flex-col rounded-3xl border p-7 ${
+                    p.recommended
+                      ? "border-blue-400/60 bg-[linear-gradient(160deg,rgba(59,108,255,0.22),rgba(6,10,22,0.6))] shadow-[0_0_70px_rgba(59,108,255,0.25)] lg:-my-3 lg:py-10"
+                      : "border-white/10 bg-white/[0.03]"
                   }`}
                 >
                   {p.recommended && (
-                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-white">
+                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-blue-500 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-white">
                       Рекомендуем
                     </span>
                   )}
-                  <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{p.label}</p>
+                  <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{p.label}</p>
                   <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="font-display text-4xl font-bold text-slate-950">{formatTenge(p.price)}</span>
-                    {p.compareAt && <span className="text-lg text-slate-400 line-through">{formatTenge(p.compareAt)}</span>}
+                    <span className="font-display text-4xl font-bold text-white">{formatTenge(p.price)}</span>
+                    {p.compareAt && <span className="text-lg text-slate-500 line-through">{formatTenge(p.compareAt)}</span>}
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">{p.note}</p>
+                  <p className="mt-1 text-sm text-slate-400">{p.note}</p>
 
-                  <div className="my-6 border-t border-slate-100" />
+                  <div className="my-6 border-t border-white/10" />
 
-                  <p className="font-display text-3xl font-bold text-slate-950">
+                  <p className="font-display text-3xl font-bold text-amber-300">
                     {formatTenge(Math.round(p.price / p.days))}
-                    <span className="ml-1 text-base font-medium text-slate-500">/ день</span>
+                    <span className="ml-1 text-base font-medium text-slate-400">/ день</span>
                   </p>
                   {p.compareAt ? (
-                    <span className="mt-2 w-fit rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
+                    <span className="mt-2 w-fit rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-300">
                       Экономия {Math.round((1 - p.price / p.compareAt) * 100)}%
                     </span>
                   ) : (
@@ -338,9 +341,9 @@ export default function Home() {
 
                   <Link
                     href="/onboarding"
-                    className={`mt-auto block rounded-xl py-3 text-center font-semibold ${
-                      p.recommended ? "bg-blue-600 text-white hover:bg-blue-700" : "border border-slate-300 text-slate-800 hover:bg-slate-50"
-                    } ${p.recommended ? "mt-8" : "mt-8"}`}
+                    className={`mt-8 block rounded-full py-3 text-center font-semibold transition ${
+                      p.recommended ? "bg-blue-500 text-white hover:bg-blue-400" : "border border-white/15 text-white hover:bg-white/5"
+                    }`}
                   >
                     Выбрать
                   </Link>
@@ -348,12 +351,12 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="mx-auto mt-10 max-w-4xl rounded-3xl border border-slate-200 bg-white p-7">
-              <p className="font-semibold text-slate-900">Во все тарифы входит</p>
+            <div className={`mx-auto mt-10 max-w-4xl ${card} p-7`}>
+              <p className="font-semibold text-white">Во все тарифы входит</p>
               <ul className="mt-4 grid gap-3 sm:grid-cols-2">
                 {PLAN_FEATURES.map((f) => (
-                  <li key={f} className="flex gap-3 text-slate-700">
-                    <Check className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                  <li key={f} className="flex gap-3 text-slate-300">
+                    <Check className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
                     {f}
                   </li>
                 ))}
@@ -366,37 +369,37 @@ export default function Home() {
         </section>
 
         {/* Для поступивших */}
-        <section className="mx-auto max-w-6xl px-4 pt-20 sm:px-6">
-          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-slate-950 p-8 text-white sm:p-10 md:flex-row md:items-center">
+        <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
+          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl border border-white/10 bg-[linear-gradient(120deg,rgba(251,191,36,0.10),rgba(59,108,255,0.12))] p-8 sm:p-10 md:flex-row md:items-center">
             <div className="max-w-2xl">
-              <p className="font-mono text-xs uppercase tracking-wider text-blue-400">— Для поступивших</p>
-              <h2 className="mt-3 font-display text-2xl font-bold sm:text-3xl">Уже поступил(а) за рубеж? Поделись опытом</h2>
+              <p className={eyebrow}>— Для поступивших</p>
+              <h2 className="mt-3 font-display text-2xl font-bold text-white sm:text-3xl">Уже поступил(а) за рубеж? Поделись опытом</h2>
               <p className="mt-3 text-slate-400">
                 Честные истории — что сработало, какие были ошибки, даже отказы — помогают школьникам больше любых гайдов. ИИ-наставник Unilight опирается
                 именно на них.
               </p>
             </div>
-            <Link href="/share" className="shrink-0 rounded-xl bg-white px-6 py-3 font-semibold text-slate-950 hover:bg-slate-100">
+            <Link href="/share" className="shrink-0 rounded-full bg-white px-6 py-3 font-semibold text-[#060a16] transition hover:bg-slate-100">
               Рассказать свою историю
             </Link>
           </div>
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="scroll-mt-16 mx-auto max-w-3xl px-4 py-20 sm:px-6">
+        <section id="faq" className="scroll-mt-24 mx-auto max-w-3xl px-4 py-24 sm:px-6">
           <div className="text-center">
-            <BookOpenCheck className="mx-auto h-8 w-8 text-blue-600" strokeWidth={1.6} />
-            <h2 className="mt-3 font-display text-3xl font-bold text-slate-950 sm:text-4xl">Частые вопросы</h2>
-            <p className="mt-3 text-slate-600">Честно о том, как работает Unilight и чего от него ждать.</p>
+            <BookOpenCheck className="mx-auto h-8 w-8 text-amber-300" strokeWidth={1.6} />
+            <h2 className={`mt-3 ${h2}`}>Частые вопросы</h2>
+            <p className="mt-3 text-slate-400">Честно о том, как работает Unilight и чего от него ждать.</p>
           </div>
           <div className="mt-10 grid gap-3">
             {FAQ.map((f) => (
-              <details key={f.q} className="group rounded-2xl border border-slate-200 bg-white p-5 open:shadow-lg open:shadow-slate-200/60">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-900">
+              <details key={f.q} className="group rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition open:border-white/20 open:bg-white/[0.05]">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-white">
                   {f.q}
                   <ChevronDown className="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" />
                 </summary>
-                <div className="mt-4 grid gap-3 leading-relaxed text-slate-600 [&_b]:text-slate-900 [&_li]:ml-5 [&_li]:list-disc [&_ul]:grid [&_ul]:gap-2">
+                <div className="mt-4 grid gap-3 leading-relaxed text-slate-400 [&_a]:text-amber-300 [&_b]:text-white [&_li]:ml-5 [&_li]:list-disc [&_ul]:grid [&_ul]:gap-2">
                   {f.a}
                 </div>
               </details>
@@ -405,46 +408,46 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm text-slate-500 sm:grid-cols-[1fr_auto_auto] sm:px-6">
+      <footer className="relative border-t border-white/10">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm text-slate-400 sm:grid-cols-[1fr_auto_auto] sm:px-6">
           <div>
-            <Logo />
+            <Logo tone="light" />
             <p className="mt-3 max-w-xs">EdTech-платформа, которая ведёт школьника к поступлению в зарубежный университет — без страха.</p>
           </div>
           <nav className="grid content-start gap-2">
-            <p className="font-semibold text-slate-900">Платформа</p>
-            <Link href="/onboarding" className="hover:text-slate-900">
+            <p className="font-semibold text-white">Платформа</p>
+            <Link href="/onboarding" className="hover:text-white">
               Начать
             </Link>
-            <Link href="/login" className="hover:text-slate-900">
+            <Link href="/login" className="hover:text-white">
               Войти
             </Link>
-            <Link href="/#pricing" className="hover:text-slate-900">
+            <Link href="/#pricing" className="hover:text-white">
               Тарифы
             </Link>
           </nav>
           <nav className="grid content-start gap-2">
-            <p className="font-semibold text-slate-900">Unilight</p>
-            <Link href="/share" className="hover:text-slate-900">
+            <p className="font-semibold text-white">Unilight</p>
+            <Link href="/share" className="hover:text-white">
               Поделиться опытом
             </Link>
-            <Link href="/#faq" className="hover:text-slate-900">
+            <Link href="/#faq" className="hover:text-white">
               Вопросы
             </Link>
           </nav>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-slate-100 py-4 text-xs text-slate-400">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-white/5 py-4 text-xs text-slate-500">
           <span>
             © {new Date().getFullYear()} {SITE.name}
           </span>
-          <Link href="/privacy" className="hover:text-slate-700">
+          <Link href="/privacy" className="hover:text-slate-300">
             Политика конфиденциальности
           </Link>
-          <Link href="/terms" className="hover:text-slate-700">
+          <Link href="/terms" className="hover:text-slate-300">
             Условия использования
           </Link>
         </div>
       </footer>
-    </>
+    </div>
   );
 }

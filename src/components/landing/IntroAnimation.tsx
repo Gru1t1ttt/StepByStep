@@ -6,83 +6,78 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 // Вступительная анимация Unilight.
 //
-// Сцена 1600×900 (масштабируется под экран). Логотип собран из частей, координаты
-// сняты с исходного логотипа: «Un», «ght» — картинки, палка i/l, точки и ножка второй «i» — блоки.
+// Сцена 1600×900 (масштабируется под экран). Логотип собран из частей по размерам исходного
+// логотипа: «Un» и «ght» — картинки, точки и ножка второй «i» — блоки, а палка i/l — это ОДНА
+// SVG-линия. Эта же линия плавно изгибается в лесенку и обратно (морфинг пути), поэтому
+// никаких кусков и швов.
 //
-// Сценарий: логотип → палка i/l распадается на ступеньки лесенки вниз → FEAR:
-// Forget Everything And Run (красный) → слова рассыпаются → лесенка переворачивается вверх →
-// Face Everything And Rise (золото, «свет» — как в названии) → всё собирается обратно в логотип.
+// Сценарий: логотип → палка изгибается в лесенку вниз → FEAR: Forget Everything And Run →
+// лесенка переворачивается вверх → Face Everything And Rise (золото — «свет» из названия) →
+// лесенка выпрямляется обратно в палку, логотип собирается.
 
 const STAGE_W = 1600;
 const STAGE_H = 900;
-const CONTENT_W = 1180; // ширина, которую нужно уместить на экране (логотип и самые длинные слова)
+const CONTENT_W = 1180;
 
-// Части логотипа на сцене
 const LOGO = {
   un: { left: 261, top: 161, width: 432, height: 268 },
-  ght: { left: 848, top: 399, width: 493, height: 341 },
+  ght: { left: 848, top: 399, width: 493, height: 356 },
   dot1: { left: 705, top: 161, width: 56, height: 54 },
   dot2: { left: 775, top: 399, width: 56, height: 54 },
   stem2: { left: 779, top: 485, width: 49, height: 175 },
-  bar: { left: 708, top: 247, width: 50, height: 413 },
 };
+const BAR = { x: 733, top: 247, bottom: 659, width: 50 }; // центр палки i/l
 
 const LETTERS = ["F", "E", "A", "R"] as const;
 const RUN_WORDS = ["orget", "verything", "nd", "un"];
 const RISE_WORDS = ["ace", "verything", "nd", "ise"];
-
 const LETTER_SIZE = 128;
 const WORD_SIZE = 84;
 
-// Позиции букв (левый край, базовая линия) для лесенки вниз и вверх
-const DOWN = [
-  { x: 440, y: 250 },
-  { x: 540, y: 395 },
-  { x: 640, y: 540 },
-  { x: 740, y: 685 },
-];
-const UP = [
-  { x: 420, y: 700 },
-  { x: 545, y: 555 },
-  { x: 670, y: 410 },
-  { x: 795, y: 265 },
-];
+// Лесенка: 4 ступеньки по 125px, буква стоит на своей ступеньке
+const STEP_X = [405, 530, 655, 780, 905];
+const DOWN_Y = [250, 395, 540, 685]; // базовые линии букв
+const UP_Y = [700, 555, 410, 265];
+const TREAD_GAP = 28; // ступенька чуть ниже базовой линии
 
-// Ступенька — полоска под буквой
-const tread = (p: { x: number; y: number }) => ({ left: p.x - 12, top: p.y + 22, width: 150, height: 22 });
-// Исходное положение ступенек — четыре куска палки i/l
-const barPiece = (i: number) => {
-  // нахлёст в 3px, чтобы в собранном логотипе не было видно швов между кусками
-  const h = LOGO.bar.height / 4;
-  const top = LOGO.bar.top + h * i - (i > 0 ? 3 : 0);
-  return { left: LOGO.bar.left, top, width: LOGO.bar.width, height: LOGO.bar.top + h * (i + 1) - top };
+// Путь из 4 ступенек: M x0 y0 H x1 V y1 H x2 V y2 H x3 V y3 H x4 — одна и та же структура
+// для палки и для лесенок, поэтому линия может плавно перетекать из формы в форму.
+const stairsPath = (ys: number[]) => {
+  const t = ys.map((y) => y + TREAD_GAP);
+  return `M ${STEP_X[0]} ${t[0]} H ${STEP_X[1]} V ${t[1]} H ${STEP_X[2]} V ${t[2]} H ${STEP_X[3]} V ${t[3]} H ${STEP_X[4]}`;
 };
+const barPath = () => {
+  const s = (BAR.bottom - BAR.top) / 3;
+  const y = [BAR.top, BAR.top + s, BAR.top + 2 * s, BAR.bottom];
+  return `M ${BAR.x} ${y[0]} H ${BAR.x} V ${y[1]} H ${BAR.x} V ${y[2]} H ${BAR.x} V ${y[3]} H ${BAR.x}`;
+};
+const PATH = { bar: barPath(), down: stairsPath(DOWN_Y), up: stairsPath(UP_Y) };
 
-// Фазы анимации и когда они начинаются (мс)
-const TIMELINE = [
+// Фазы и время их начала (мс)
+const TIMELINE: [number, number][] = [
   [0, 0], // логотип
-  [1300, 1], // палка распадается на лесенку вниз
-  [2100, 2], // появляются F E A R
-  [2800, 3], // Forget Everything And Run
-  [4600, 4], // слова рассыпаются
-  [5200, 5], // лесенка переворачивается вверх
-  [6000, 6], // Face Everything And Rise
-  [8200, 7], // всё уходит
-  [8900, 8], // логотип собирается обратно
-  [9800, 9], // подпись и подсказка листать
-] as const;
-const FINAL = 9;
+  [1100, 1], // палка изгибается в лесенку вниз
+  [1650, 2], // F E A R падают на ступеньки
+  [2150, 3], // Forget Everything And Run
+  [3700, 4], // слова срываются, лесенка переворачивается вверх
+  [4400, 5], // Face Everything And Rise
+  [6300, 6], // слова и буквы уходят
+  [6750, 7], // лесенка выпрямляется в палку, логотип собирается
+  [7600, 8], // подпись и кнопки
+];
+const FINAL = 8;
 
-const RED = "#ef4444";
+const RED = "#f87171";
 const GOLD = "#fbbf24";
 const ease = [0.22, 1, 0.36, 1] as const;
+const spring = { type: "spring", stiffness: 170, damping: 22, mass: 0.9 } as const;
 
 function useStageScale(ref: React.RefObject<HTMLDivElement | null>) {
   const [scale, setScale] = useState(0.5);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const update = () => setScale(Math.min((el.clientWidth * 0.94) / CONTENT_W, (el.clientHeight * 0.9) / STAGE_H));
+    const update = () => setScale(Math.min((el.clientWidth * 0.94) / CONTENT_W, (el.clientHeight * 0.86) / STAGE_H));
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -111,42 +106,42 @@ export default function IntroAnimation() {
 
   const replay = useCallback(() => setRun((r) => r + 1), []);
 
-  const logoShown = phase === 0 || phase >= 8;
-  const stairs = phase >= 1 && phase <= 7;
-  const up = phase >= 5;
-  const positions = up ? UP : DOWN;
-  const lettersShown = phase >= 2 && phase <= 6;
+  const logoShown = phase === 0 || phase >= 7;
+  const up = phase >= 4 && phase <= 6;
+  const shape = phase === 0 || phase >= 7 ? "bar" : up ? "up" : "down";
+  const ys = up ? UP_Y : DOWN_Y;
+  const lettersShown = phase >= 2 && phase <= 5;
+  const fear = phase === 3;
+  const rise = phase === 5;
+
+  const lineColor = fear ? RED : phase >= 4 && phase <= 6 ? GOLD : "#ffffff";
 
   const logoPart = (key: keyof typeof LOGO, src?: string) => {
     const r = LOGO[key];
-    const common = {
-      className: "absolute",
+    const props = {
+      className: `absolute ${src ? "" : "bg-white"} ${key.startsWith("dot") ? "rounded-full" : ""}`,
       style: { left: r.left, top: r.top, width: r.width, height: r.height },
-      initial: { opacity: 0, y: 12 },
-      animate: logoShown ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: -8, filter: "blur(6px)" },
-      transition: { duration: 0.6, ease },
+      initial: { opacity: 0, scale: 0.96 },
+      animate: logoShown ? { opacity: 1, scale: 1, filter: "blur(0px)" } : { opacity: 0, scale: 0.94, filter: "blur(8px)" },
+      transition: { duration: logoShown ? 0.7 : 0.45, ease, delay: logoShown && phase >= 7 ? 0.25 : 0 },
     };
-    return src ? (
-      <motion.img key={key} src={src} alt="" draggable={false} {...common} />
-    ) : (
-      <motion.div key={key} {...common} className={`absolute bg-white ${key.startsWith("dot") ? "rounded-full" : ""}`} />
-    );
+    return src ? <motion.img key={key} src={src} alt="" draggable={false} {...props} /> : <motion.div key={key} {...props} />;
   };
 
   return (
-    <section ref={box} className="relative flex h-[100svh] min-h-[520px] items-center justify-center overflow-hidden bg-[#07080b] text-white">
-      {/* мягкое свечение фона: красное в фазе страха, золотое в фазе подъёма */}
+    <section ref={box} className="relative flex h-[100svh] min-h-[540px] items-center justify-center overflow-hidden text-white">
+      {/* свечение: красное в фазе страха, золотое в фазе подъёма */}
       <motion.div
         className="pointer-events-none absolute inset-0"
         animate={{
-          background:
-            phase >= 3 && phase <= 4
-              ? "radial-gradient(60% 50% at 45% 45%, rgba(239,68,68,0.16), transparent 70%)"
-              : phase >= 6 && phase <= 7
-                ? "radial-gradient(60% 50% at 50% 55%, rgba(251,191,36,0.16), transparent 70%)"
-                : "radial-gradient(60% 50% at 50% 50%, rgba(255,255,255,0.05), transparent 70%)",
+          opacity: 1,
+          background: fear
+            ? "radial-gradient(55% 45% at 45% 45%, rgba(248,113,113,0.20), transparent 70%)"
+            : phase >= 4 && phase <= 6
+              ? "radial-gradient(55% 45% at 50% 55%, rgba(251,191,36,0.20), transparent 70%)"
+              : "radial-gradient(55% 45% at 50% 50%, rgba(79,110,255,0.14), transparent 70%)",
         }}
-        transition={{ duration: 1 }}
+        transition={{ duration: 1.1, ease }}
       />
 
       <div
@@ -154,123 +149,122 @@ export default function IntroAnimation() {
         style={{ width: STAGE_W, height: STAGE_H, transform: `translate(-50%, -50%) scale(${scale})`, transformOrigin: "center" }}
         aria-hidden
       >
-        {/* логотип */}
         {logoPart("un", "/intro/un.png")}
         {logoPart("ght", "/intro/ght.png")}
         {logoPart("dot1")}
         {logoPart("dot2")}
         {logoPart("stem2")}
 
-        {/* палка i/l → четыре ступеньки */}
-        {LETTERS.map((_, i) => {
-          const target = stairs ? tread(positions[i]) : barPiece(i);
-          return (
-            <motion.div
-              key={`tread-${i}`}
-              className="absolute bg-white"
-              initial={barPiece(i)}
-              animate={{
-                ...target,
-                borderRadius: stairs ? 6 : 0,
-                backgroundColor: phase >= 3 && phase <= 4 ? "#fecaca" : phase >= 6 && phase <= 7 ? "#fde68a" : "#ffffff",
-                opacity: phase === 7 ? 0.9 : 1,
-              }}
-              transition={{ duration: stairs ? 0.75 : 0.7, ease, delay: stairs && phase === 1 ? i * 0.08 : phase === 5 ? (3 - i) * 0.06 : 0 }}
-            />
-          );
-        })}
+        {/* палка i/l ⇄ лесенка — одна линия */}
+        <svg className="absolute inset-0 overflow-visible" width={STAGE_W} height={STAGE_H} viewBox={`0 0 ${STAGE_W} ${STAGE_H}`}>
+          <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="10" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <motion.path
+            fill="none"
+            strokeLinejoin="miter"
+            strokeLinecap="butt"
+            initial={{ d: PATH.bar, strokeWidth: BAR.width, stroke: "#ffffff" }}
+            animate={{
+              d: PATH[shape],
+              strokeWidth: shape === "bar" ? BAR.width : 16,
+              stroke: lineColor,
+              opacity: rise ? 0.35 : 1,
+            }}
+            filter={phase >= 1 && phase <= 6 ? "url(#glow)" : undefined}
+            transition={{
+              d: { duration: shape === "bar" ? 0.85 : 0.75, ease: [0.65, 0, 0.25, 1] },
+              strokeWidth: { duration: 0.6, ease },
+              stroke: { duration: 0.6 },
+              opacity: { duration: 0.6 },
+            }}
+          />
+        </svg>
 
-        {/* буквы F E A R и слова */}
-        {LETTERS.map((letter, i) => {
-          const p = positions[i];
-          return (
-            <motion.div
-              key={`row-${i}`}
-              className="absolute flex items-baseline whitespace-nowrap font-[family-name:var(--font-outfit)] font-bold leading-none"
-              style={{ left: 0, top: 0 }}
-              initial={false}
-              animate={{ x: p.x, y: p.y - LETTER_SIZE * 0.78, opacity: lettersShown ? 1 : 0 }}
-              transition={{
-                x: { duration: 0.8, ease },
-                y: { duration: 0.8, ease },
-                opacity: { duration: 0.4, delay: phase === 2 ? i * 0.12 : 0 },
-              }}
-            >
+        {/* F E A R и слова */}
+        {LETTERS.map((letter, i) => (
+          <motion.div
+            key={letter}
+            className="absolute left-0 top-0 flex items-baseline whitespace-nowrap font-[family-name:var(--font-outfit)] font-bold leading-none"
+            initial={{ x: STEP_X[i] + 14, y: DOWN_Y[i] - LETTER_SIZE * 0.78 - 60, opacity: 0 }}
+            animate={{
+              x: STEP_X[i] + 14,
+              y: ys[i] - LETTER_SIZE * 0.78 - (lettersShown ? 0 : 60),
+              opacity: lettersShown ? 1 : 0,
+            }}
+            transition={{
+              y: phase === 2 ? { ...spring, delay: i * 0.07 } : { duration: 0.75, ease: [0.65, 0, 0.25, 1] },
+              x: { duration: 0.6, ease },
+              opacity: { duration: 0.3, delay: phase === 2 ? i * 0.07 : 0 },
+            }}
+          >
+            <span style={{ fontSize: LETTER_SIZE }}>{letter}</span>
+            <span className="relative" style={{ fontSize: WORD_SIZE }}>
               <motion.span
-                style={{ fontSize: LETTER_SIZE }}
-                animate={{ scale: phase === 2 ? [0.6, 1.08, 1] : 1 }}
-                transition={{ duration: 0.5, delay: i * 0.12 }}
+                className="absolute left-0 top-0"
+                style={{ color: RED, textShadow: "0 0 24px rgba(248,113,113,0.45)" }}
+                initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+                animate={
+                  fear
+                    ? { clipPath: "inset(0 0% 0 0)", opacity: 1, x: 0, filter: "blur(0px)" }
+                    : phase === 4
+                      ? { clipPath: "inset(0 0% 0 0)", opacity: 0, x: 60, filter: "blur(12px)" }
+                      : { clipPath: "inset(0 100% 0 0)", opacity: 0, x: 0, filter: "blur(0px)" }
+                }
+                transition={{ duration: fear ? 0.42 : 0.35, delay: fear ? 0.14 * i : 0.04 * i, ease }}
               >
-                {letter}
+                {RUN_WORDS[i]}
               </motion.span>
-              <span className="relative" style={{ fontSize: WORD_SIZE }}>
-                <motion.span
-                  className="absolute left-0 top-0"
-                  style={{ color: RED }}
-                  initial={{ clipPath: "inset(0 100% 0 0)", opacity: 1 }}
-                  animate={
-                    phase === 3
-                      ? { clipPath: "inset(0 0% 0 0)", opacity: 1, x: 0, filter: "blur(0px)" }
-                      : phase === 4
-                        ? { clipPath: "inset(0 0% 0 0)", opacity: 0, x: 40, filter: "blur(10px)" }
-                        : { clipPath: "inset(0 100% 0 0)", opacity: 0, x: 0, filter: "blur(0px)" }
-                  }
-                  transition={{ duration: phase === 4 ? 0.55 : 0.5, delay: phase === 3 ? 0.25 * i : 0.05 * i, ease }}
-                >
-                  {RUN_WORDS[i]}
-                </motion.span>
-                <motion.span
-                  className="block"
-                  style={{ color: GOLD, textShadow: "0 0 28px rgba(251,191,36,0.55)" }}
-                  initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
-                  animate={phase === 6 ? { clipPath: "inset(0 0% 0 0)", opacity: 1 } : { clipPath: "inset(0 100% 0 0)", opacity: 0 }}
-                  transition={{ duration: 0.55, delay: phase === 6 ? 0.28 * i : 0, ease }}
-                >
-                  {RISE_WORDS[i]}
-                </motion.span>
-              </span>
-            </motion.div>
-          );
-        })}
+              <motion.span
+                className="block"
+                style={{ color: GOLD, textShadow: "0 0 30px rgba(251,191,36,0.55)" }}
+                initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+                animate={rise ? { clipPath: "inset(0 0% 0 0)", opacity: 1 } : { clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+                transition={{ duration: 0.45, delay: rise ? 0.16 * i : 0, ease }}
+              >
+                {RISE_WORDS[i]}
+              </motion.span>
+            </span>
+          </motion.div>
+        ))}
 
-        {/* световой след, когда лесенка поднимается */}
+        {/* огонёк, взлетающий по лесенке вверх */}
         <motion.div
-          className="absolute h-3 rounded-full"
-          style={{ left: 380, top: 760, width: 620, background: "linear-gradient(90deg, transparent, #fbbf24, #fff7d6)", rotate: -38, transformOrigin: "left center" }}
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={phase === 5 ? { opacity: [0, 1, 0], scaleX: [0, 1, 1] } : { opacity: 0, scaleX: 0 }}
-          transition={{ duration: 0.9, ease }}
-        />
-        <motion.div
-          className="absolute h-10 w-10 rounded-full"
-          style={{ background: "radial-gradient(circle at 35% 35%, #fff7d6, #fbbf24 55%, #b45309)", boxShadow: "0 0 40px 10px rgba(251,191,36,0.45)" }}
-          initial={{ opacity: 0, left: 380, top: 760 }}
-          animate={phase === 6 ? { opacity: 1, left: [380, 1120, 1180], top: [760, 250, 230] } : { opacity: 0 }}
-          transition={{ duration: phase === 6 ? 1.6 : 0.4, ease }}
+          className="absolute left-0 top-0 h-9 w-9 rounded-full"
+          style={{ background: "radial-gradient(circle at 35% 35%, #fffbeb, #fbbf24 55%, #b45309)", boxShadow: "0 0 44px 12px rgba(251,191,36,0.45)" }}
+          initial={{ opacity: 0, x: STEP_X[0], y: UP_Y[0] + 10 }}
+          animate={
+            phase === 4 || rise
+              ? { opacity: [0, 1, 1], x: [STEP_X[0], STEP_X[2], STEP_X[4] + 30], y: [UP_Y[0] + 10, UP_Y[2] + 10, UP_Y[3] - 30] }
+              : { opacity: 0 }
+          }
+          transition={{ duration: phase === 4 || rise ? 1.1 : 0.4, ease }}
         />
       </div>
 
-      {/* подпись и подсказка */}
       <motion.div
-        className="absolute inset-x-0 bottom-8 flex flex-col items-center gap-4 px-4 text-center"
-        initial={{ opacity: 0, y: 12 }}
-        animate={phase >= FINAL ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+        className="absolute inset-x-0 bottom-10 flex flex-col items-center gap-4 px-4 text-center"
+        initial={{ opacity: 0, y: 14 }}
+        animate={phase >= FINAL ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
         transition={{ duration: 0.7, ease }}
       >
-        <p className="font-[family-name:var(--font-outfit)] text-sm font-medium uppercase tracking-[0.35em] text-white/70 sm:text-base">
-          Face everything and rise
-        </p>
+        <p className="font-[family-name:var(--font-outfit)] text-sm font-medium uppercase tracking-[0.35em] text-white/60 sm:text-base">Face everything and rise</p>
         <div className="flex items-center gap-3">
-          <a href="#start" className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-slate-100">
+          <a href="#start" className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#060a16] transition hover:bg-slate-100">
             Начать путь <ChevronDown className="h-4 w-4" />
           </a>
-          <button type="button" onClick={replay} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm text-white/60 hover:text-white" aria-label="Повторить анимацию">
+          <button type="button" onClick={replay} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm text-white/50 transition hover:text-white" aria-label="Повторить анимацию">
             <RotateCcw className="h-4 w-4" /> Ещё раз
           </button>
         </div>
       </motion.div>
 
-      {/* текст для скринридеров */}
       <h2 className="sr-only">Unilight — Face Everything And Rise</h2>
     </section>
   );

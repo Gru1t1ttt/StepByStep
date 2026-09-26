@@ -185,22 +185,22 @@ export default function PlatformTabs() {
               type="button"
               onClick={() => setActive(i)}
               className={`flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition lg:w-full ${
-                on ? "border-slate-900 bg-slate-950 text-white shadow-lg shadow-slate-900/10" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                on ? "border-white bg-white text-[#060a16] shadow-lg shadow-blue-500/10" : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20"
               }`}
             >
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${on ? "bg-white/10" : "bg-slate-100"}`}>
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${on ? "bg-[#060a16]/5 text-blue-600" : "bg-white/5 text-amber-300"}`}>
                 <t.icon className="h-4.5 w-4.5" strokeWidth={1.8} />
               </span>
               <span>
                 <span className="block text-sm font-semibold">{t.label}</span>
-                <span className={`hidden text-xs lg:block ${on ? "text-white/60" : "text-slate-500"}`}>{t.hint}</span>
+                <span className={`hidden text-xs lg:block ${on ? "text-slate-500" : "text-slate-500"}`}>{t.hint}</span>
               </span>
             </button>
           );
         })}
       </div>
 
-      <div className="relative min-h-[420px] rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-xl shadow-slate-200/50 sm:p-8">
+      <div className="relative min-h-[420px] rounded-3xl border border-white/10 bg-gradient-to-br from-white to-slate-100 p-5 shadow-[0_0_80px_rgba(59,108,255,0.18)] sm:p-8">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
             <tab.icon className="h-4 w-4 text-blue-600" strokeWidth={2} /> {tab.label}

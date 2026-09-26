@@ -14,3 +14,18 @@ body {
   color: #0f172a;
   font-family: var(--font-inter), system-ui, sans-serif;
 }
+
+/* Орбита на главной */
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.orbit-spin {
+  animation: orbit-spin 60s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-spin {
+    animation: none;
+  }
+}
