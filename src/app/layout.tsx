@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Outfit, Unbounded } from "next/font/google";
 import AuthSync from "@/components/site/AuthSync";
+import CabinetLoaderHost from "@/components/site/CabinetLoader";
+import { HTML_LANG } from "@/lib/i18n";
+import { LangProvider } from "@/lib/i18n/client";
+import { getLang, getT } from "@/lib/i18n/server";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -20,27 +24,33 @@ const unbounded = Unbounded({
   subsets: ["latin", "cyrillic"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE.url),
-  title: { default: "Unilight — поступи в университет мечты без страха", template: "%s — Unilight" },
-  description:
-    "ИИ-платформа для школьников: персональная карта развития, подбор олимпиад и конкурсов, gap analysis для университетов, портфолио и ИИ-наставник.",
-  openGraph: {
-    type: "website",
-    locale: "ru_RU",
-    siteName: "Unilight",
-    title: "Unilight — поступи в университет мечты без страха",
-    description: "Персональная карта развития, подбор возможностей и ИИ-наставник для поступления за рубеж.",
-    images: [{ url: "/logo.png", width: 546, height: 288, alt: "Unilight" }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return {
+    metadataBase: new URL(SITE.url),
+    title: { default: t.meta.title, template: "%s — Unilight" },
+    description: t.meta.description,
+    openGraph: {
+      type: "website",
+      locale: "ru_RU",
+      siteName: "Unilight",
+      title: t.meta.title,
+      description: t.meta.description,
+      images: [{ url: "/logo.png", width: 546, height: 288, alt: "Unilight" }],
+    },
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const lang = await getLang();
   return (
-    <html lang="ru" className={`${inter.variable} ${unbounded.variable} ${outfit.variable} h-full antialiased`}>
+    <html lang={HTML_LANG[lang]} className={`${inter.variable} ${unbounded.variable} ${outfit.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <AuthSync />
-        {children}
+        <LangProvider lang={lang}>
+          <AuthSync />
+          {children}
+          <CabinetLoaderHost />
+        </LangProvider>
       </body>
     </html>
   );

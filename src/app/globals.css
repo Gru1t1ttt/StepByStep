@@ -29,3 +29,79 @@ body {
     animation: none;
   }
 }
+
+/* ——— Кабинет: тёмная палитра в тон главной ———
+   Страницы кабинета свёрстаны светлыми классами Tailwind (bg-white, text-slate-900…). Tailwind v4
+   берёт цвета из CSS-переменных, поэтому внутри .cabinet переменные подменены на тёмную гамму:
+   фон — глубокий синий, карточки чуть светлее, текст не чисто белый, чтобы не резал глаза.
+   Для печати (портфолио в PDF) остаётся светлая версия. */
+@media screen {
+  body:has(.cabinet) {
+    background: #0a1020;
+    color: #e6eaf2;
+  }
+
+  .cabinet {
+    color-scheme: dark;
+    color: #e6eaf2;
+
+    --color-white: #111a2e; /* карточки */
+    --color-slate-50: #141e35;
+    --color-slate-100: #1a2540;
+    --color-slate-200: #243150; /* рамки */
+    --color-slate-300: #324163;
+    --color-slate-400: #6f7c99;
+    --color-slate-500: #8d99b3;
+    --color-slate-600: #a5b0c6;
+    --color-slate-700: #bfc8d9;
+    --color-slate-800: #d6dce8;
+    --color-slate-900: #e6eaf2;
+    --color-slate-950: #eff2f8;
+
+    --color-blue-50: #14244a;
+    --color-blue-100: #1a2f5e;
+    --color-blue-200: #27427c;
+    --color-blue-300: #3a5ba3;
+    --color-blue-400: #5b82e6;
+    --color-blue-600: #3b6cf6;
+    --color-blue-700: #93b2ff; /* ссылки и активные пункты */
+    --color-blue-800: #a9c1ff;
+    --color-blue-900: #c3d4ff;
+    --color-blue-950: #dbe5ff;
+
+    --color-emerald-50: #0f2a23;
+    --color-emerald-200: #1d5140;
+    --color-emerald-600: #34d399;
+    --color-emerald-700: #6ee7b7;
+
+    --color-amber-50: #2a2213;
+    --color-amber-100: #3a2d14;
+    --color-amber-200: #5a4518;
+    --color-amber-600: #fbbf24;
+    --color-amber-800: #fcd34d;
+    --color-amber-900: #fde68a;
+
+    --color-rose-50: #2d1520;
+    --color-rose-200: #5c2536;
+    --color-rose-600: #fb7185;
+    --color-rose-700: #fda4af;
+    --color-rose-800: #fecdd3;
+  }
+
+  /* там, где светлые оттенки нужны как есть */
+  .cabinet .text-white {
+    color: #fff;
+  }
+  .cabinet .text-blue-100 {
+    color: #dbe6ff;
+  }
+  .cabinet .hover\:bg-blue-700:hover {
+    background-color: #2f5be0;
+  }
+  .cabinet .hover\:bg-slate-800:hover {
+    background-color: #1e293b;
+  }
+  .cabinet .bg-slate-950\/30 {
+    background-color: rgb(2 6 23 / 0.6);
+  }
+}

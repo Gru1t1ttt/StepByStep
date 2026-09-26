@@ -3,13 +3,14 @@
 import { ChevronDown, RotateCcw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n/client";
 
 // Вступительная анимация Unilight.
 //
 // Сцена 1600×900 (масштабируется под экран). Логотип собран из частей по размерам исходного
 // логотипа: «Un» и «ght» — картинки, точки и ножка второй «i» — блоки, а палка i/l — это ОДНА
-// SVG-линия. Эта же линия плавно изгибается в лесенку и обратно (морфинг пути), поэтому
-// никаких кусков и швов.
+// SVG-линия со скруглёнными углами. Толстая палка логотипа сужается в эту линию, линия плавно
+// изгибается в лесенку и обратно (морфинг пути), а в конце снова наливается в палку.
 //
 // Сценарий: логотип → палка изгибается в лесенку вниз → FEAR: Forget Everything And Run →
 // лесенка переворачивается вверх → Face Everything And Rise (золото — «свет» из названия) →
@@ -39,6 +40,7 @@ const STEP_X = [405, 530, 655, 780, 905];
 const DOWN_Y = [250, 395, 540, 685]; // базовые линии букв
 const UP_Y = [700, 555, 410, 265];
 const TREAD_GAP = 28; // ступенька чуть ниже базовой линии
+const LINE_W = 16; // толщина линии-лесенки
 
 // Путь из 4 ступенек: M x0 y0 H x1 V y1 H x2 V y2 H x3 V y3 H x4 — одна и та же структура
 // для палки и для лесенок, поэтому линия может плавно перетекать из формы в форму.
@@ -87,6 +89,7 @@ function useStageScale(ref: React.RefObject<HTMLDivElement | null>) {
 }
 
 export default function IntroAnimation() {
+  const t = useT();
   const reduced = useReducedMotion();
   const box = useRef<HTMLDivElement>(null);
   const scale = useStageScale(box);
@@ -119,6 +122,10 @@ export default function IntroAnimation() {
   const lettersShown = phase >= 2 && phase <= 5;
   const fear = phase === 3;
   const rise = phase === 5;
+
+  // толстая палка видна только в логотипе; всё остальное время — тонкая линия
+  const barSolid = phase === 0 || phase >= 8;
+  const lineShown = (phase >= 1 && phase <= 4) || phase === 7;
 
   const lineColor = fear ? RED : phase >= 4 && phase <= 6 ? GOLD : "#ffffff";
 
@@ -161,7 +168,21 @@ export default function IntroAnimation() {
         {logoPart("dot2")}
         {logoPart("stem2")}
 
-        {/* палка i/l ⇄ лесенка — одна линия */}
+        {/* палка i/l — сплошной блок, как в логотипе. Когда она «гнётся», блок сужается до толщины
+            линии и растворяется, а дальше работает тонкая линия со скруглёнными углами. */}
+        <motion.div
+          className="absolute bg-white"
+          style={{ left: BAR.x - BAR.width / 2, top: BAR.top, width: BAR.width, height: BAR.bottom - BAR.top }}
+          initial={false}
+          animate={barSolid ? { opacity: 1, scaleX: 1 } : { opacity: 0, scaleX: LINE_W / BAR.width }}
+          transition={
+            barSolid
+              ? { duration: 0.55, ease }
+              : { opacity: { duration: 0.3, delay: 0.15 }, scaleX: { duration: 0.35, ease } }
+          }
+        />
+
+        {/* палка ⇄ лесенка — одна тонкая линия */}
         <svg className="absolute inset-0 overflow-visible" width={STAGE_W} height={STAGE_H} viewBox={`0 0 ${STAGE_W} ${STAGE_H}`}>
           <defs>
             <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -174,22 +195,17 @@ export default function IntroAnimation() {
           </defs>
           <motion.path
             fill="none"
-            strokeLinejoin="miter"
-            strokeLinecap="butt"
-            initial={{ d: PATH.bar, strokeWidth: BAR.width, stroke: "#ffffff" }}
-            animate={{
-              d: PATH[shape],
-              strokeWidth: shape === "bar" ? BAR.width : 16,
-              stroke: lineColor,
-              // пока видны Face Everything And Rise — линия гаснет, чтобы не резать слова
-              opacity: rise ? 0 : 1,
-            }}
-            filter={phase >= 1 && phase <= 6 ? "url(#glow)" : undefined}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeWidth={LINE_W}
+            filter="url(#glow)"
+            initial={{ d: PATH.bar, stroke: "#ffffff", opacity: 0 }}
+            animate={{ d: PATH[shape], stroke: lineColor, opacity: lineShown ? 1 : 0 }}
             transition={{
-              d: { duration: shape === "bar" ? 0.85 : 0.75, ease: [0.65, 0, 0.25, 1] },
-              strokeWidth: { duration: 0.6, ease },
+              d: { duration: shape === "bar" ? 0.8 : 0.75, ease: [0.65, 0, 0.25, 1], delay: phase === 1 ? 0.12 : 0 },
               stroke: { duration: 0.6 },
-              opacity: { duration: rise ? 0.35 : 0.5 },
+              // пока видны Face Everything And Rise — линия гаснет, чтобы не резать слова
+              opacity: { duration: lineShown ? 0.25 : phase >= 8 ? 0.4 : 0.35 },
             }}
           />
         </svg>
@@ -252,10 +268,10 @@ export default function IntroAnimation() {
         <p className="font-[family-name:var(--font-outfit)] text-sm font-medium uppercase tracking-[0.35em] text-white/60 sm:text-base">Face everything and rise</p>
         <div className="flex items-center gap-3">
           <a href="#start" className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#060a16] transition hover:bg-slate-100">
-            Начать путь <ChevronDown className="h-4 w-4" />
+            {t.intro.start} <ChevronDown className="h-4 w-4" />
           </a>
-          <button type="button" onClick={replay} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm text-white/50 transition hover:text-white" aria-label="Повторить анимацию">
-            <RotateCcw className="h-4 w-4" /> Ещё раз
+          <button type="button" onClick={replay} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm text-white/50 transition hover:text-white" aria-label={t.intro.replayAria}>
+            <RotateCcw className="h-4 w-4" /> {t.intro.replay}
           </button>
         </div>
       </motion.div>

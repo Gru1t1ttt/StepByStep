@@ -58,7 +58,7 @@ export default function SharePage() {
   return (
     <>
       <Header />
-      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+      <main className="cabinet mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         {state === "done" ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
             <HeartHandshake className="mx-auto h-10 w-10 text-blue-600" strokeWidth={1.6} />

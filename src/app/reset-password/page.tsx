@@ -34,7 +34,7 @@ export default function ResetPasswordPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto w-full max-w-md px-4 py-12">
+      <main className="cabinet mx-auto w-full max-w-md px-4 py-12">
         <h1 className="mb-8 text-center font-display text-3xl font-bold tracking-tight text-slate-950">Новый пароль</h1>
         <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
           {auth.status === "loading" ? (

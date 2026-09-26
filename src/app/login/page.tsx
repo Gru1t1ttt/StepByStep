@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Header from "@/components/site/Header";
 import { authErrorText, enabledProviders, supabase, supabaseConfigured, type OAuthProvider } from "@/lib/supabase";
+import { showCabinetLoader } from "@/components/site/CabinetLoader";
+import { useT } from "@/lib/i18n/client";
 import { useAuth, usePlatform } from "@/lib/store";
 
 const input =
@@ -34,6 +36,7 @@ function AppleIcon() {
 }
 
 function LoginForm() {
+  const t = useT().login;
   const params = useSearchParams();
   const router = useRouter();
   const auth = useAuth();
@@ -55,6 +58,7 @@ function LoginForm() {
   useEffect(() => {
     if (auth.status !== "signed-in" || !state) return;
     const next = params.get("next");
+    showCabinetLoader();
     router.replace(next && next.startsWith("/") ? next : state.profile ? "/dashboard" : "/onboarding");
   }, [auth.status, state, params, router]);
 
@@ -110,20 +114,16 @@ function LoginForm() {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
         <MailCheck className="mx-auto h-10 w-10 text-blue-600" strokeWidth={1.6} />
-        <h1 className="mt-3 font-display text-xl font-bold text-slate-950">Проверь почту</h1>
+        <h1 className="mt-3 font-display text-xl font-bold text-slate-950">{t.checkMail}</h1>
         <p className="mt-2 text-slate-600">
           {sent === "reset" ? (
-            <>
-              Если аккаунт с адресом <b>{email}</b> существует, мы отправили письмо со ссылкой для нового пароля. Письмо может попасть в «Спам».
-            </>
+            <WithEmail text={t.resetSent} email={email} />
           ) : (
-            <>
-              Мы отправили письмо на <b>{email}</b>. Перейди по ссылке из него, чтобы подтвердить аккаунт, и затем войди.
-            </>
+            <WithEmail text={t.confirmSent} email={email} />
           )}
         </p>
         <button type="button" onClick={() => (setSent(""), switchMode("login"))} className="mt-6 text-sm font-semibold text-blue-700">
-          Ко входу
+          {t.toLogin}
         </button>
       </div>
     );
@@ -135,8 +135,8 @@ function LoginForm() {
     <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
       {mode === "forgot" ? (
         <div className="mb-6">
-          <h2 className="font-display text-lg font-bold text-slate-950">Восстановление пароля</h2>
-          <p className="mt-1 text-sm text-slate-600">Укажи почту аккаунта — пришлём ссылку для нового пароля.</p>
+          <h2 className="font-display text-lg font-bold text-slate-950">{t.forgotTitle}</h2>
+          <p className="mt-1 text-sm text-slate-600">{t.forgotText}</p>
         </div>
       ) : (
         <div className="mb-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm">
@@ -147,7 +147,7 @@ function LoginForm() {
               onClick={() => switchMode(m)}
               className={`rounded-lg py-2 font-medium ${mode === m ? "bg-white text-slate-950 shadow-sm" : "text-slate-500"}`}
             >
-              {m === "login" ? "Вход" : "Регистрация"}
+              {m === "login" ? t.tabLogin : t.tabSignup}
             </button>
           ))}
         </div>
@@ -162,7 +162,7 @@ function LoginForm() {
                 onClick={() => oauth("google")}
                 className="flex items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
               >
-                <GoogleIcon /> Продолжить с Google
+                <GoogleIcon /> {t.google}
               </button>
             )}
             {providers.apple && (
@@ -171,13 +171,13 @@ function LoginForm() {
                 onClick={() => oauth("apple")}
                 className="flex items-center justify-center gap-3 rounded-xl bg-black py-2.5 text-sm font-medium text-white hover:bg-slate-800"
               >
-                <AppleIcon /> Продолжить с Apple
+                <AppleIcon /> {t.apple}
               </button>
             )}
           </div>
           <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
             <span className="h-px flex-1 bg-slate-200" />
-            или по почте
+            {t.orEmail}
             <span className="h-px flex-1 bg-slate-200" />
           </div>
         </>
@@ -186,21 +186,21 @@ function LoginForm() {
       <form onSubmit={submit} className="grid gap-4">
         {mode === "signup" && (
           <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-            Имя
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Как к тебе обращаться" className={input} autoComplete="name" />
+            {t.name}
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePlaceholder} className={input} autoComplete="name" />
           </label>
         )}
         <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-          Почта
+          {t.email}
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={input} autoComplete="email" />
         </label>
         {mode !== "forgot" && (
           <label className="grid gap-1.5 text-sm font-medium text-slate-700">
             <span className="flex items-center justify-between">
-              Пароль
+              {t.password}
               {mode === "login" && (
                 <button type="button" onClick={() => switchMode("forgot")} className="text-xs font-medium text-blue-700 hover:underline">
-                  Забыли пароль?
+                  {t.forgot}
                 </button>
               )}
             </span>
@@ -217,46 +217,59 @@ function LoginForm() {
         )}
         {error && <p className="rounded-lg bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
         <button type="submit" disabled={busy} className="rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-          {busy ? "Подождите…" : mode === "login" ? "Войти" : mode === "signup" ? "Создать аккаунт" : "Отправить ссылку"}
+          {busy ? t.wait : mode === "login" ? t.submitLogin : mode === "signup" ? t.submitSignup : t.submitForgot}
         </button>
       </form>
 
       {mode === "forgot" && (
         <button type="button" onClick={() => switchMode("login")} className="mt-4 w-full text-center text-sm font-medium text-slate-500 hover:text-slate-800">
-          ← Назад ко входу
+          {t.back}
         </button>
       )}
       {mode === "signup" && (
         <p className="mt-4 text-center text-xs text-slate-500">
-          Создавая аккаунт, ты соглашаешься с{" "}
+          {t.agree[0]}{" "}
           <Link href="/terms" className="underline">
-            условиями
+            {t.agree[1]}
           </Link>{" "}
-          и{" "}
+          {t.agree[2]}{" "}
           <Link href="/privacy" className="underline">
-            политикой конфиденциальности
+            {t.agree[3]}
           </Link>
-          .
+          {t.agree[4]}
         </p>
       )}
       {mode === "signup" && state?.profile && (
-        <p className="mt-4 text-center text-xs text-slate-500">Анкета, которую ты уже заполнил(а), сохранится в аккаунте.</p>
+        <p className="mt-4 text-center text-xs text-slate-500">{t.profileKept}</p>
       )}
     </div>
   );
 }
 
-export default function LoginPage() {
+// Текст с {email}: адрес выделяется жирным
+function WithEmail({ text, email }: { text: string; email: string }) {
+  const [before, after] = text.split("{email}");
   return (
     <>
+      {before}
+      <b>{email}</b>
+      {after}
+    </>
+  );
+}
+
+export default function LoginPage() {
+  const t = useT().login;
+  return (
+    <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="mx-auto w-full max-w-md px-4 py-12">
-        <h1 className="mb-2 text-center font-display text-3xl font-bold tracking-tight text-slate-950">Добро пожаловать</h1>
-        <p className="mb-8 text-center text-slate-600">Аккаунт хранит твой профиль, план и портфолио — на любом устройстве.</p>
+      <main className="cabinet mx-auto w-full max-w-md px-4 py-12">
+        <h1 className="mb-2 text-center font-display text-3xl font-bold tracking-tight text-slate-950">{t.title}</h1>
+        <p className="mb-8 text-center text-slate-600">{t.subtitle}</p>
         <Suspense fallback={<div className="h-72 animate-pulse rounded-2xl bg-slate-100" />}>
           <LoginForm />
         </Suspense>
       </main>
-    </>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import CabinetReady from "@/components/platform/CabinetReady";
 import Header from "@/components/site/Header";
 import OnboardingForm from "@/components/onboarding/OnboardingForm";
 
@@ -10,7 +11,8 @@ export default function OnboardingPage() {
   return (
     <>
     <Header />
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+    <main className="cabinet mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+      <CabinetReady />
       <header className="mb-8 max-w-2xl">
         <p className="text-sm font-medium text-blue-600">Шаг 1 из 3 · Профиль</p>
         <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Расскажи о себе</h1>

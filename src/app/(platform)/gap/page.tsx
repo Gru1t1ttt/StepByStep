@@ -61,7 +61,7 @@ export default function GapPage() {
                 <p className="font-semibold text-slate-900">{uni.name}</p>
                 <div
                   className="mx-auto mt-5 flex h-36 w-36 items-center justify-center rounded-full"
-                  style={{ background: `conic-gradient(#2563eb ${r * 3.6}deg, #e2e8f0 0deg)` }}
+                  style={{ background: `conic-gradient(var(--color-blue-600) ${r * 3.6}deg, var(--color-slate-200) 0deg)` }}
                 >
                   <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white font-display text-3xl font-bold text-slate-950">{r}%</div>
                 </div>
