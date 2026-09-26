@@ -4,6 +4,7 @@ import { ChevronDown, RotateCcw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n/client";
+import { useTheme } from "@/lib/theme";
 
 // Вступительная анимация Unilight: логотип собирается из частей.
 //
@@ -47,6 +48,9 @@ const box = (r: { left: number; top: number; width: number; height: number }) =>
 
 export default function IntroAnimation() {
   const t = useT();
+  const light = useTheme().theme === "light";
+  const img = light ? "-dark" : ""; // в светлой теме логотип тёмный
+  const ink = light ? "#0b1324" : "#ffffff";
   const reduced = useReducedMotion();
   const stageBox = useRef<HTMLDivElement>(null);
   const scale = useStageScale(stageBox);
@@ -103,7 +107,7 @@ export default function IntroAnimation() {
 
         {/* «Un» и «ght» съезжаются к палке */}
         <motion.img
-          src="/intro/un.png"
+          src={`/intro/un${img}.png`}
           alt=""
           draggable={false}
           className="absolute"
@@ -113,7 +117,7 @@ export default function IntroAnimation() {
           transition={{ duration: 0.9, delay: 0.6, ease }}
         />
         <motion.img
-          src="/intro/ght.png"
+          src={`/intro/ght${img}.png`}
           alt=""
           draggable={false}
           className="absolute"
@@ -139,7 +143,7 @@ export default function IntroAnimation() {
             className="absolute rounded-full"
             style={box(LOGO[k])}
             initial={from({ y: -260, opacity: 0, backgroundColor: "#fbbf24" })}
-            animate={{ y: 0, opacity: 1, backgroundColor: ["#fbbf24", "#fbbf24", "#ffffff"] }}
+            animate={{ y: 0, opacity: 1, backgroundColor: ["#fbbf24", "#fbbf24", ink] }}
             transition={{
               y: { ...drop, delay: 1.3 + i * 0.15 },
               opacity: { duration: 0.2, delay: 1.3 + i * 0.15 },

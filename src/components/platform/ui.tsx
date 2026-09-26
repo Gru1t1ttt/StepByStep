@@ -7,14 +7,18 @@ import type { ReactNode } from "react";
 import type { Profile } from "@/lib/profile";
 import type { Catalog } from "@/lib/analysis";
 import { useCatalog } from "@/lib/catalog";
+import { useLang, useT } from "@/lib/i18n/client";
 import { useAuth, usePlatform, type PlatformState } from "@/lib/store";
 
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+  const lang = useLang();
+  const t = useT().cabinet;
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{title}</h1>
         {subtitle && <p className="mt-1 max-w-2xl text-slate-600">{subtitle}</p>}
+        {lang !== "ru" && <p className="mt-1 text-xs text-slate-400">{t.note}</p>}
       </div>
       {action}
     </div>
@@ -46,6 +50,7 @@ export const ghostButtonClass =
 
 // Показывает страницу только вошедшему пользователю с заполненным профилем.
 export function WithProfile({ children }: { children: (profile: Profile, state: PlatformState, catalog: Catalog) => ReactNode }) {
+  const t = useT();
   const auth = useAuth();
   const state = usePlatform();
   const catalog = useCatalog();
@@ -53,14 +58,14 @@ export function WithProfile({ children }: { children: (profile: Profile, state: 
     return (
       <Card className="mx-auto max-w-lg p-8 text-center">
         <Lock className="mx-auto h-9 w-9 text-slate-400" strokeWidth={1.6} />
-        <h2 className="mt-3 font-display text-xl font-bold text-slate-950">Войди в аккаунт</h2>
-        <p className="mt-2 text-slate-600">Профиль, план и портфолио сохраняются в аккаунте и доступны с любого устройства.</p>
+        <h2 className="mt-3 font-display text-xl font-bold text-slate-950">{t.cabinet.gate.loginTitle}</h2>
+        <p className="mt-2 text-slate-600">{t.cabinet.gate.loginText}</p>
         <div className="mt-6 flex justify-center gap-2">
           <Link href="/login" className={ghostButtonClass}>
-            Войти
+            {t.auth.login}
           </Link>
           <Link href="/login?mode=signup" className={buttonClass}>
-            Создать аккаунт
+            {t.hero.create}
           </Link>
         </div>
       </Card>
@@ -70,12 +75,10 @@ export function WithProfile({ children }: { children: (profile: Profile, state: 
     return (
       <Card className="mx-auto max-w-lg p-8 text-center">
         <Hand className="mx-auto h-9 w-9 text-slate-400" strokeWidth={1.6} />
-        <h2 className="mt-3 font-display text-xl font-bold text-slate-950">Сначала расскажи о себе</h2>
-        <p className="mt-2 text-slate-600">
-          Платформа строит карту развития, подбирает возможности и считает gap analysis на основе твоего профиля.
-        </p>
+        <h2 className="mt-3 font-display text-xl font-bold text-slate-950">{t.cabinet.gate.profileTitle}</h2>
+        <p className="mt-2 text-slate-600">{t.cabinet.gate.profileText}</p>
         <Link href="/onboarding" className={`${buttonClass} mt-6`}>
-          Заполнить анкету
+          {t.cabinet.gate.fillProfile}
         </Link>
       </Card>
     );

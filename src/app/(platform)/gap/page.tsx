@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
 import Link from "next/link";
 import { useState } from "react";
 import { gapAnalysis, readiness, suggestedUniversities } from "@/lib/analysis";
@@ -12,6 +13,7 @@ const STATUS = {
 } as const;
 
 export default function GapPage() {
+  const tc = useT().cabinet;
   const [picked, setPicked] = useState("");
 
   return (
@@ -28,8 +30,8 @@ export default function GapPage() {
         return (
           <div>
             <PageHeader
-              title="Gap analysis"
-              subtitle="Сравнение твоего профиля с требованиями университета: что уже есть, а что нужно подтянуть."
+              title={tc.pages.gap[0]}
+              subtitle={tc.pages.gap[1]}
             />
 
             <div className="mb-5 flex flex-wrap gap-2">

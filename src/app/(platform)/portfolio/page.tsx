@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
 import { Award, Code2, FlaskConical, HeartHandshake, Paperclip, Trophy, X, type LucideIcon } from "lucide-react";
 
 import { useState, type FormEvent } from "react";
@@ -53,6 +54,7 @@ function fromProfile(p: Profile): PortfolioItem[] {
 }
 
 export default function PortfolioPage() {
+  const tc = useT().cabinet;
   const [draft, setDraft] = useState(emptyItem);
   const [open, setOpen] = useState(false);
 
@@ -72,8 +74,8 @@ export default function PortfolioPage() {
         return (
           <div>
             <PageHeader
-              title="Портфолио"
-              subtitle="Все дипломы, проекты, сертификаты и активности в одном месте. Отсюда собирается портфолио для поступления."
+              title={tc.pages.portfolio[0]}
+              subtitle={tc.pages.portfolio[1]}
               action={
                 <div className="flex gap-2 print:hidden">
                   <button type="button" onClick={() => window.print()} className={ghostButtonClass}>

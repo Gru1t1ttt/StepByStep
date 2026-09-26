@@ -66,7 +66,7 @@ export default async function Home() {
   const card = "rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-sm";
 
   return (
-    <div className="relative overflow-x-clip bg-[#060a16] text-slate-300">
+    <div className="ink relative overflow-x-clip bg-[#060a16] text-slate-300">
       {/* мягкие световые пятна — плавные переходы между секциями вместо резких блоков */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute left-1/2 top-[70vh] h-[900px] w-[1200px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(59,108,255,0.18),transparent)]" />
@@ -192,7 +192,7 @@ export default async function Home() {
                   key={p.id}
                   className={`relative flex flex-col rounded-3xl border p-7 ${
                     p.recommended
-                      ? "border-blue-400/60 bg-[linear-gradient(160deg,rgba(59,108,255,0.22),rgba(6,10,22,0.6))] shadow-[0_0_70px_rgba(59,108,255,0.25)] lg:-my-3 lg:py-10"
+                      ? "plan-recommended border-blue-400/60 bg-[linear-gradient(160deg,rgba(59,108,255,0.22),rgba(6,10,22,0.6))] shadow-[0_0_70px_rgba(59,108,255,0.25)] lg:-my-3 lg:py-10"
                       : "border-white/10 bg-white/[0.03]"
                   }`}
                 >

@@ -76,7 +76,7 @@ export default function Orbit({ labels, center, centerText }: { labels: string[]
         ))}
 
         {/* центр */}
-        <div className="absolute left-1/2 top-1/2 flex h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-white/15 bg-[radial-gradient(circle_at_50%_30%,#16213f,#080d1c_70%)] text-center shadow-[0_0_80px_rgba(79,110,255,0.25)]">
+        <div className="orbit-center absolute left-1/2 top-1/2 flex h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-white/15 bg-[radial-gradient(circle_at_50%_30%,#16213f,#080d1c_70%)] text-center shadow-[0_0_80px_rgba(79,110,255,0.25)]">
           <span className="font-display text-6xl font-bold text-amber-300">{center}</span>
           <span className="mt-3 max-w-[210px] text-base text-slate-300">{centerText}</span>
         </div>

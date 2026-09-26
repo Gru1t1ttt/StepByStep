@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
 import { AlarmClock } from "lucide-react";
 
 import Link from "next/link";
@@ -15,6 +16,7 @@ function minusWeeks(iso: string, weeks: number) {
 }
 
 export default function CalendarPage() {
+  const tc = useT().cabinet;
   return (
     <WithProfile>
       {(profile, state, catalog) => {
@@ -55,8 +57,8 @@ export default function CalendarPage() {
         return (
           <div>
             <PageHeader
-              title="Дедлайны"
-              subtitle="Конкурсы из твоего плана, экзамены и подачи в университеты. Напомним не только о дедлайне, но и о том, когда пора начинать готовиться."
+              title={tc.pages.calendar[0]}
+              subtitle={tc.pages.calendar[1]}
             />
 
             {events.length === 0 && (

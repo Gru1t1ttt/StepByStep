@@ -188,7 +188,7 @@ export default function PlatformTabs() {
         })}
       </div>
 
-      <div className="relative min-h-[420px] rounded-3xl border border-white/10 bg-gradient-to-br from-white to-slate-100 p-5 shadow-[0_0_80px_rgba(59,108,255,0.18)] sm:p-8">
+      <div className="keep-light relative min-h-[420px] rounded-3xl border border-white/10 bg-gradient-to-br from-white to-slate-100 p-5 shadow-[0_0_80px_rgba(59,108,255,0.18)] sm:p-8">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
             <tab.icon className="h-4 w-4 text-blue-600" strokeWidth={2} /> {tab.label}

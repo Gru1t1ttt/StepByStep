@@ -5,6 +5,7 @@ import { MessageCircle } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { buildRoadmap, gapAnalysis, rankOpportunities, type Catalog } from "@/lib/analysis";
 import type { Profile } from "@/lib/profile";
+import { useLang, useT } from "@/lib/i18n/client";
 import { updateState, type ChatMessage, type ChatSource, type PlatformState } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import Markdown from "@/components/platform/Markdown";
@@ -58,6 +59,7 @@ function Sources({ sources }: { sources: ChatSource[] }) {
 }
 
 function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformState; catalog: Catalog }) {
+  const lang = useLang();
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState("");
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
@@ -84,7 +86,7 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token && { Authorization: `Bearer ${token}` }) },
         // Источники из прошлых ответов модели не нужны — отправляем только текст.
-        body: JSON.stringify({ messages: messages.map(({ role, content }) => ({ role, content })), context: buildContext(profile, state, catalog) }),
+        body: JSON.stringify({ messages: messages.map(({ role, content }) => ({ role, content })), context: buildContext(profile, state, catalog), lang }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Не удалось получить ответ. Попробуй ещё раз.");
       const reader = res.body!.getReader();
@@ -179,13 +181,14 @@ function Chat({ profile, state, catalog }: { profile: Profile; state: PlatformSt
 }
 
 export default function MentorPage() {
+  const tc = useT().cabinet;
   return (
     <WithProfile>
       {(profile, state, catalog) => (
         <div>
           <PageHeader
-            title="ИИ-наставник"
-            subtitle="Помнит, что ты уже умеешь, и помогает двигаться в выбранном направлении."
+            title={tc.pages.mentor[0]}
+            subtitle={tc.pages.mentor[1]}
             action={
               state.chat.length > 0 && (
                 <button type="button" onClick={() => updateState({ chat: [] })} className={ghostButtonClass}>

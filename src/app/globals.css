@@ -10,7 +10,7 @@ html {
 }
 
 body {
-  background: #fbf9f4;
+  background: #f5f7fb;
   color: #0f172a;
   font-family: var(--font-inter), system-ui, sans-serif;
 }
@@ -30,18 +30,27 @@ body {
   }
 }
 
-/* ——— Кабинет: тёмная палитра в тон главной ———
-   Страницы кабинета свёрстаны светлыми классами Tailwind (bg-white, text-slate-900…). Tailwind v4
-   берёт цвета из CSS-переменных, поэтому внутри .cabinet переменные подменены на тёмную гамму:
-   фон — глубокий синий, карточки чуть светлее, текст не чисто белый, чтобы не резал глаза.
-   Для печати (портфолио в PDF) остаётся светлая версия. */
+/* ——— Темы ———
+   На <html> атрибут data-theme="dark" | "light" (выбор хранится в cookie, см. src/lib/theme.tsx).
+
+   Кабинет (.cabinet) свёрстан светлыми классами Tailwind (bg-white, text-slate-900…), главная и шапка
+   (.ink) — тёмными (bg-[#060a16], text-white, white/10…). Tailwind v4 берёт цвета из CSS-переменных,
+   поэтому вторая тема каждой части — это подмена переменных внутри её обёртки, без второй вёрстки.
+   Для печати (портфолио в PDF) кабинет всегда светлый. */
+
+html[data-theme="light"] .theme-dark-only,
+html[data-theme="dark"] .theme-light-only {
+  display: none;
+}
+
+/* ——— Кабинет в тёмной теме: глубокий синий, карточки чуть светлее, текст не чисто белый ——— */
 @media screen {
-  body:has(.cabinet) {
+  html[data-theme="dark"] body:has(.cabinet) {
     background: #0a1020;
     color: #e6eaf2;
   }
 
-  .cabinet {
+  html[data-theme="dark"] .cabinet {
     color-scheme: dark;
     color: #e6eaf2;
 
@@ -89,19 +98,86 @@ body {
   }
 
   /* там, где светлые оттенки нужны как есть */
-  .cabinet .text-white {
+  html[data-theme="dark"] .cabinet .text-white {
     color: #fff;
   }
-  .cabinet .text-blue-100 {
+  html[data-theme="dark"] .cabinet .text-blue-100 {
     color: #dbe6ff;
   }
-  .cabinet .hover\:bg-blue-700:hover {
+  html[data-theme="dark"] .cabinet .hover\:bg-blue-700:hover {
     background-color: #2f5be0;
   }
-  .cabinet .hover\:bg-slate-800:hover {
+  html[data-theme="dark"] .cabinet .hover\:bg-slate-800:hover {
     background-color: #1e293b;
   }
-  .cabinet .bg-slate-950\/30 {
+  html[data-theme="dark"] .cabinet .bg-slate-950\/30 {
     background-color: rgb(2 6 23 / 0.6);
   }
+
+  /* кабинет в светлой теме — мягкий серо-голубой фон, белые карточки */
+  html[data-theme="light"] body:has(.cabinet) {
+    background: #eef1f6;
+  }
+}
+
+/* ——— Главная и шапка (.ink) в светлой теме ———
+   «Белое» (текст, полупрозрачные слои, рамки) становится тёмно-синим, фон — светлым,
+   золото темнее, чтобы читалось на светлом. */
+html[data-theme="light"] .ink {
+  color-scheme: light;
+  --color-white: #0b1324;
+  --color-slate-200: #1e293b;
+  --color-slate-300: #334155;
+  --color-slate-400: #4b5870;
+  --color-slate-500: #64748b;
+  --color-amber-200: #f59e0b;
+  --color-amber-300: #d97706;
+  --color-amber-400: #b45309;
+  --color-emerald-300: #059669;
+}
+html[data-theme="light"] .ink.bg-\[\#060a16\],
+html[data-theme="light"] .ink .bg-\[\#060a16\] {
+  background-color: #f5f7fb;
+}
+/* кнопки «белые с тёмным текстом» становятся тёмными со светлым текстом */
+html[data-theme="light"] .ink .text-\[\#060a16\] {
+  color: #fff;
+}
+html[data-theme="light"] .ink .hover\:bg-slate-100:hover {
+  background-color: #1e293b;
+}
+html[data-theme="light"] .ink .bg-blue-500,
+html[data-theme="light"] .ink .bg-blue-600 {
+  color: #fff;
+}
+html[data-theme="light"] .ink .bg-\[\#0a0f1f\]\/75 {
+  background-color: rgb(255 255 255 / 0.8);
+}
+html[data-theme="light"] .ink .bg-\[\#0d1428\]\/90 {
+  background-color: rgb(255 255 255 / 0.92);
+}
+html[data-theme="light"] .ink .orbit-center {
+  background: radial-gradient(circle at 50% 30%, #ffffff, #e8eefb 70%);
+  box-shadow: 0 0 80px rgba(79, 110, 255, 0.18);
+}
+html[data-theme="light"] .ink .plan-recommended {
+  background: linear-gradient(160deg, rgba(59, 108, 255, 0.14), rgba(255, 255, 255, 0.9));
+  box-shadow: 0 0 70px rgba(59, 108, 255, 0.18);
+}
+html[data-theme="light"] .ink .shadow-black\/20,
+html[data-theme="light"] .ink .shadow-black\/30 {
+  --tw-shadow-color: rgb(15 23 42 / 0.08);
+}
+
+/* Внутри .ink светлые макеты (экраны платформы на главной) — исходная палитра Tailwind */
+html[data-theme="light"] .ink .keep-light {
+  --color-white: #fff;
+  --color-slate-200: oklch(92.9% 0.013 255.508);
+  --color-slate-300: oklch(86.9% 0.022 252.894);
+  --color-slate-400: oklch(70.4% 0.04 256.788);
+  --color-slate-500: oklch(55.4% 0.046 257.417);
+  --color-amber-200: oklch(92.4% 0.12 95.746);
+  --color-amber-300: oklch(87.9% 0.169 91.605);
+  --color-amber-400: oklch(82.8% 0.189 84.429);
+  --color-emerald-300: oklch(84.5% 0.143 164.978);
 }

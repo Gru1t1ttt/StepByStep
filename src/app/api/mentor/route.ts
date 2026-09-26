@@ -34,6 +34,7 @@ const SYSTEM = `Ты — ИИ-наставник платформы Unilight. П
 type Body = {
   messages: ChatTurn[];
   context: { profile?: Profile; targets?: { name: string }[] } & Record<string, unknown>;
+  lang?: "kz" | "ru" | "en";
 };
 
 function studentSummary(context: Body["context"]): StudentSummary {
@@ -60,7 +61,9 @@ export async function POST(req: Request) {
   const who = await getRequestUser(req);
   if (!who) return Response.json({ error: "Войди в аккаунт, чтобы пользоваться наставником." }, { status: 401 });
 
-  const { messages, context } = (await req.json()) as Body;
+  const { messages, context, lang } = (await req.json()) as Body;
+  // Язык сайта: наставник отвечает на нём (если ученик сам не пишет на другом языке)
+  const answerLang = { kz: "казахском", en: "английском", ru: "русском" }[lang ?? "ru"] ?? "русском";
   if (!Array.isArray(messages) || messages.length === 0) {
     return Response.json({ error: "Пустой запрос" }, { status: 400 });
   }
@@ -87,7 +90,7 @@ export async function POST(req: Request) {
       try {
         const stream = streamChat({
           system: SYSTEM,
-          context: `Контекст ученика (JSON):\n${JSON.stringify(context)}\n\n<knowledge>\n${knowledge.context}\n</knowledge>`,
+          context: `Язык интерфейса ученика — отвечай на ${answerLang} языке, если ученик сам не пишет на другом.\n\nКонтекст ученика (JSON):\n${JSON.stringify(context)}\n\n<knowledge>\n${knowledge.context}\n</knowledge>`,
           messages: messages.slice(-30).map(({ role, content }) => ({ role, content })),
         });
         for await (const text of stream) controller.enqueue(encoder.encode(text));

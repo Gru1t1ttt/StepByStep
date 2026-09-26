@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
 import { Check, ExternalLink } from "lucide-react";
 
 import { useState } from "react";
@@ -12,6 +13,7 @@ import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
 const selectClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 
 export default function OpportunitiesPage() {
+  const tc = useT().cabinet;
   const [type, setType] = useState("");
   const [interest, setInterest] = useState("");
   const [format, setFormat] = useState("");
@@ -34,8 +36,8 @@ export default function OpportunitiesPage() {
         return (
           <div>
             <PageHeader
-              title="Возможности"
-              subtitle="Олимпиады, хакатоны, конкурсы, летние школы и исследования, отсортированные по тому, насколько они подходят именно тебе."
+              title={tc.pages.opportunities[0]}
+              subtitle={tc.pages.opportunities[1]}
             />
 
             <div className="mb-5 flex flex-wrap gap-2">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
 import { Check, PartyPopper } from "lucide-react";
 
 import Link from "next/link";
@@ -52,6 +53,7 @@ function FirstSteps({ state }: { state: { targets: string[]; savedOpportunities:
 const CATEGORY_TONE = { Экзамен: "amber", Возможность: "blue", Проект: "green", Профиль: "slate", Подача: "rose" } as const;
 
 export default function DashboardPage() {
+  const tc = useT().cabinet;
   return (
     <WithProfile>
       {(profile, state, catalog) => {
@@ -65,8 +67,8 @@ export default function DashboardPage() {
         return (
           <div className="grid gap-6">
             <PageHeader
-              title={`Привет, ${firstName}!`}
-              subtitle="Твоя карта развития: где ты сейчас, куда идёшь и что делать дальше."
+              title={tc.hello.replace("{name}", firstName)}
+              subtitle={tc.pages.dashboard}
             />
 
             <FirstSteps state={state} />

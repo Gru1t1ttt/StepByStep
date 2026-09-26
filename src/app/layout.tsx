@@ -4,7 +4,8 @@ import AuthSync from "@/components/site/AuthSync";
 import CabinetLoaderHost from "@/components/site/CabinetLoader";
 import { HTML_LANG } from "@/lib/i18n";
 import { LangProvider } from "@/lib/i18n/client";
-import { getLang, getT } from "@/lib/i18n/server";
+import { getLang, getT, getTheme } from "@/lib/i18n/server";
+import { ThemeProvider } from "@/lib/theme";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -42,15 +43,22 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const lang = await getLang();
+  const [lang, theme] = await Promise.all([getLang(), getTheme()]);
   return (
-    <html lang={HTML_LANG[lang]} className={`${inter.variable} ${unbounded.variable} ${outfit.variable} h-full antialiased`}>
+    <html
+      lang={HTML_LANG[lang]}
+      data-theme={theme}
+      style={{ colorScheme: theme }}
+      className={`${inter.variable} ${unbounded.variable} ${outfit.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col">
-        <LangProvider lang={lang}>
-          <AuthSync />
-          {children}
-          <CabinetLoaderHost />
-        </LangProvider>
+        <ThemeProvider initial={theme}>
+          <LangProvider lang={lang}>
+            <AuthSync />
+            {children}
+            <CabinetLoaderHost />
+          </LangProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useState, useSyncExternalStore, type ComponentProps } from "react";
 import { useT } from "@/lib/i18n/client";
+import { useTheme } from "@/lib/theme";
 
 // Переход в кабинет. Логотип Unilight на тёмном фоне: палка i/l сворачивается в кольцо,
 // точки и ножка второй «i» втягиваются в него, кольцо крутится, пока кабинет загружается.
@@ -101,6 +102,9 @@ function useScale() {
 function Scene() {
   const t = useT();
   const scale = useScale();
+  const light = useTheme().theme === "light";
+  const ink = light ? "#0b1324" : "#ffffff"; // цвет логотипа
+  const track = light ? "rgba(11,19,36,0.1)" : "rgba(255,255,255,0.12)";
   const [phase, setPhase] = useState(0); // 0 логотип · 1 сворачивается · 2 кольцо крутится
 
   useEffect(() => {
@@ -115,7 +119,7 @@ function Scene() {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#060a16]"
+      className={`ink fixed inset-0 z-[100] flex items-center justify-center overflow-hidden ${light ? "bg-[#f5f7fb]" : "bg-[#060a16]"}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.45 } }}
@@ -127,7 +131,7 @@ function Scene() {
 
       <div className="absolute left-1/2 top-1/2 h-[900px] w-[1600px]" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} aria-hidden>
         <motion.img
-          src="/intro/un.png"
+          src={`/intro/un${light ? "-dark" : ""}.png`}
           alt=""
           className="absolute"
           style={{ left: 261, top: 161, width: 432, height: 268 }}
@@ -136,7 +140,7 @@ function Scene() {
           transition={{ duration: ring ? 0.5 : 0.35, ease }}
         />
         <motion.img
-          src="/intro/ght.png"
+          src={`/intro/ght${light ? "-dark" : ""}.png`}
           alt=""
           className="absolute"
           style={{ left: 848, top: 399, width: 493, height: 356 }}
@@ -145,8 +149,8 @@ function Scene() {
           transition={{ duration: ring ? 0.5 : 0.35, ease }}
         />
         <motion.div
-          className="absolute bg-white"
-          style={STEM2}
+          className="absolute"
+          style={{ ...STEM2, backgroundColor: ink }}
           initial={{ opacity: 0 }}
           animate={ring ? { opacity: 0, scaleY: 0.2, y: -40 } : { opacity: 1, scaleY: 1, y: 0 }}
           transition={{ duration: 0.45, ease }}
@@ -154,13 +158,13 @@ function Scene() {
         {DOTS.map((d, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-white"
+            className="absolute rounded-full"
             style={{ left: d.left, top: d.top, width: d.size, height: d.size }}
             initial={{ opacity: 0 }}
             animate={
               ring
                 ? { x: CX - d.size / 2 - d.left, y: CY - d.size / 2 - d.top, scale: 0.2, opacity: 0, backgroundColor: GOLD }
-                : { x: 0, y: 0, scale: 1, opacity: 1, backgroundColor: "#ffffff" }
+                : { x: 0, y: 0, scale: 1, opacity: 1, backgroundColor: ink }
             }
             transition={{ duration: 0.6, ease, delay: i * 0.06 }}
           />
@@ -177,10 +181,10 @@ function Scene() {
             height: BAR.height,
             borderRadius: 0,
             borderWidth: BAR.width / 2,
-            borderTopColor: "#ffffff",
-            borderRightColor: "#ffffff",
-            borderBottomColor: "#ffffff",
-            borderLeftColor: "#ffffff",
+            borderTopColor: ink,
+            borderRightColor: ink,
+            borderBottomColor: ink,
+            borderLeftColor: ink,
             boxShadow: "0 0 0px rgba(251,191,36,0)",
             opacity: 0,
             rotate: 0,
@@ -196,8 +200,8 @@ function Scene() {
                   borderWidth: 12,
                   borderTopColor: GOLD,
                   borderRightColor: "rgba(251,191,36,0.55)",
-                  borderBottomColor: "rgba(255,255,255,0.12)",
-                  borderLeftColor: "rgba(255,255,255,0.12)",
+                  borderBottomColor: track,
+                  borderLeftColor: track,
                   boxShadow: "0 0 60px rgba(251,191,36,0.25)",
                   opacity: 1,
                   rotate: phase === 2 ? 360 : 0,
