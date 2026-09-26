@@ -99,6 +99,12 @@ export default function IntroAnimation() {
       setPhase(FINAL);
       return;
     }
+    // ?intro=5 — остановить анимацию на нужной фазе (для проверки отдельных кадров)
+    const frozen = Number(new URLSearchParams(window.location.search).get("intro"));
+    if (frozen >= 0 && frozen <= FINAL && window.location.search.includes("intro=")) {
+      setPhase(frozen);
+      return;
+    }
     setPhase(0);
     const timers = TIMELINE.map(([at, p]) => setTimeout(() => setPhase(p), at));
     return () => timers.forEach(clearTimeout);
@@ -175,14 +181,15 @@ export default function IntroAnimation() {
               d: PATH[shape],
               strokeWidth: shape === "bar" ? BAR.width : 16,
               stroke: lineColor,
-              opacity: rise ? 0.35 : 1,
+              // пока видны Face Everything And Rise — линия гаснет, чтобы не резать слова
+              opacity: rise ? 0 : 1,
             }}
             filter={phase >= 1 && phase <= 6 ? "url(#glow)" : undefined}
             transition={{
               d: { duration: shape === "bar" ? 0.85 : 0.75, ease: [0.65, 0, 0.25, 1] },
               strokeWidth: { duration: 0.6, ease },
               stroke: { duration: 0.6 },
-              opacity: { duration: 0.6 },
+              opacity: { duration: rise ? 0.35 : 0.5 },
             }}
           />
         </svg>
@@ -209,13 +216,13 @@ export default function IntroAnimation() {
               <motion.span
                 className="absolute left-0 top-0"
                 style={{ color: RED, textShadow: "0 0 24px rgba(248,113,113,0.45)" }}
-                initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+                initial={{ opacity: 0, x: -18, filter: "blur(10px)" }}
                 animate={
                   fear
-                    ? { clipPath: "inset(0 0% 0 0)", opacity: 1, x: 0, filter: "blur(0px)" }
+                    ? { opacity: 1, x: 0, filter: "blur(0px)" }
                     : phase === 4
-                      ? { clipPath: "inset(0 0% 0 0)", opacity: 0, x: 60, filter: "blur(12px)" }
-                      : { clipPath: "inset(0 100% 0 0)", opacity: 0, x: 0, filter: "blur(0px)" }
+                      ? { opacity: 0, x: 60, filter: "blur(12px)" }
+                      : { opacity: 0, x: -18, filter: "blur(10px)" }
                 }
                 transition={{ duration: fear ? 0.42 : 0.35, delay: fear ? 0.14 * i : 0.04 * i, ease }}
               >
@@ -224,8 +231,8 @@ export default function IntroAnimation() {
               <motion.span
                 className="block"
                 style={{ color: GOLD, textShadow: "0 0 30px rgba(251,191,36,0.55)" }}
-                initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
-                animate={rise ? { clipPath: "inset(0 0% 0 0)", opacity: 1 } : { clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+                initial={{ opacity: 0, x: -18, filter: "blur(10px)" }}
+                animate={rise ? { opacity: 1, x: 0, filter: "blur(0px)" } : { opacity: 0, x: -18, filter: "blur(10px)" }}
                 transition={{ duration: 0.45, delay: rise ? 0.16 * i : 0, ease }}
               >
                 {RISE_WORDS[i]}
@@ -234,18 +241,6 @@ export default function IntroAnimation() {
           </motion.div>
         ))}
 
-        {/* огонёк, взлетающий по лесенке вверх */}
-        <motion.div
-          className="absolute left-0 top-0 h-9 w-9 rounded-full"
-          style={{ background: "radial-gradient(circle at 35% 35%, #fffbeb, #fbbf24 55%, #b45309)", boxShadow: "0 0 44px 12px rgba(251,191,36,0.45)" }}
-          initial={{ opacity: 0, x: STEP_X[0], y: UP_Y[0] + 10 }}
-          animate={
-            phase === 4 || rise
-              ? { opacity: [0, 1, 1], x: [STEP_X[0], STEP_X[2], STEP_X[4] + 30], y: [UP_Y[0] + 10, UP_Y[2] + 10, UP_Y[3] - 30] }
-              : { opacity: 0 }
-          }
-          transition={{ duration: phase === 4 || rise ? 1.1 : 0.4, ease }}
-        />
       </div>
 
       <motion.div
