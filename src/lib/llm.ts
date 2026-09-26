@@ -90,3 +90,44 @@ async function* streamAnthropic({ system, context, messages }: ChatRequest) {
     throw error;
   }
 }
+
+// Один ответ в формате JSON (без стрима) — для служебных задач вроде разбора страницы программы.
+export async function completeJSON<T = Record<string, unknown>>(system: string, user: string): Promise<T> {
+  let text = "";
+  if (llmProvider() === "groq") {
+    if (!process.env.GROQ_API_KEY) throw new LLMError("На сервере не задан ключ GROQ_API_KEY.");
+    const groq = new Groq();
+    try {
+      const res = await groq.chat.completions.create({
+        model: GROQ_MODEL,
+        temperature: 0,
+        max_completion_tokens: 4096,
+        response_format: { type: "json_object" },
+        ...(GROQ_MODEL.includes("gpt-oss") ? { include_reasoning: false, reasoning_effort: "low" as const } : {}),
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      });
+      text = res.choices[0]?.message?.content ?? "";
+    } catch (error) {
+      if (error instanceof Groq.RateLimitError) throw new LLMError("Лимит Groq на минуту исчерпан. Подожди минуту и попробуй снова.");
+      throw error;
+    }
+  } else {
+    const client = new Anthropic();
+    const res = await client.messages.create({
+      model: "claude-opus-5",
+      max_tokens: 4096,
+      system,
+      messages: [{ role: "user", content: user }],
+    });
+    text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+  }
+  const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    throw new LLMError("ИИ вернул ответ не в формате JSON. Попробуй ещё раз.");
+  }
+}

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:migrate": "node scripts/db-migrate.mjs"
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:universities": "node --max-old-space-size=4096 scripts/import-world-universities.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
