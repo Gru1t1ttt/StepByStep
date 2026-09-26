@@ -37,13 +37,13 @@ export function slugify(text: string) {
 export async function upsertOpportunity(o: AdminOpportunity) {
   const id = o.id || slugify(o.title);
   await sql()`
-    insert into opportunities (id, title, type, interests, min_grade, max_grade, format, location, free, deadline, prep_weeks, url, description, published, updated_at)
+    insert into opportunities (id, title, type, interests, min_grade, max_grade, format, location, free, deadline, prep_weeks, url, description, i18n, published, updated_at)
     values (${id}, ${o.title}, ${o.type}, ${o.interests}, ${o.minGrade}, ${o.maxGrade}, ${o.format}, ${o.location}, ${o.free}, ${o.deadline},
-            ${o.prepWeeks}, ${o.url}, ${o.description}, ${o.published}, now())
+            ${o.prepWeeks}, ${o.url}, ${o.description}, ${sql().json(o.i18n ?? {})}, ${o.published}, now())
     on conflict (id) do update set title = excluded.title, type = excluded.type, interests = excluded.interests,
       min_grade = excluded.min_grade, max_grade = excluded.max_grade, format = excluded.format, location = excluded.location,
       free = excluded.free, deadline = excluded.deadline, prep_weeks = excluded.prep_weeks, url = excluded.url,
-      description = excluded.description, published = excluded.published, updated_at = now()`;
+      description = excluded.description, i18n = excluded.i18n, published = excluded.published, updated_at = now()`;
   return id;
 }
 

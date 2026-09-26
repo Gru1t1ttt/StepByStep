@@ -23,6 +23,12 @@ export function formatDate(iso: string, lang: Lang = "ru") {
 // Тексты расчётов на нужном языке
 const A = (lang: Lang) => getDict(lang).app.an;
 
+// Название и описание возможности на языке интерфейса (если есть перевод)
+export function oppText(o: Opportunity, lang: Lang) {
+  const t = lang === "ru" ? undefined : o.i18n?.[lang];
+  return { title: t?.title || o.title, description: t?.description || o.description };
+}
+
 export function gradeNumber(p: Profile) {
   const n = parseInt(p.grade, 10);
   return Number.isNaN(n) ? 12 : n;
@@ -315,7 +321,7 @@ export function buildRoadmap(p: Profile, targetIds: string[], catalog: Catalog, 
   for (const m of rankOpportunities(p, catalog.opportunities, lang).slice(0, 4)) {
     steps.push({
       id: `opp-${m.opportunity.id}`,
-      title: m.opportunity.title,
+      title: oppText(m.opportunity, lang).title,
       detail: `${tv(m.opportunity.type, lang)} · ${m.reasons.slice(0, 2).join(" · ")}`,
       due: m.opportunity.deadline,
       category: "Возможность",
@@ -351,7 +357,7 @@ export function upcomingEvents(
   return [
     ...catalog.opportunities
       .filter((o) => state.savedOpportunities.includes(o.id))
-      .map((o) => ({ id: o.id, date: o.deadline, title: o.title, kind: o.type, startPrep: minusWeeks(o.deadline, o.prepWeeks), href: "/opportunities" })),
+      .map((o) => ({ id: o.id, date: o.deadline, title: oppText(o, lang).title, kind: o.type, startPrep: minusWeeks(o.deadline, o.prepWeeks), href: "/opportunities" })),
     ...catalog.universities
       .filter((u) => state.targets.includes(u.id))
       .map((u) => ({ id: `uni-${u.id}`, date: u.deadline, title: fmt(apply, { uni: u.name }), uni: u.name, kind: "Подача", startPrep: minusWeeks(u.deadline, 12), href: "/universities" })),

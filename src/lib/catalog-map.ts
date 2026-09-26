@@ -11,7 +11,7 @@ const iso = (d: Date | string) => (typeof d === "string" ? d.slice(0, 10) : d.to
 
 export type OppRow = {
   id: string; title: string; type: string; interests: string[]; min_grade: number; max_grade: number; format: string; location: string;
-  free: boolean; deadline: Date | string; prep_weeks: number; url: string; description: string; published: boolean;
+  free: boolean; deadline: Date | string; prep_weeks: number; url: string; description: string; published: boolean; i18n?: Opportunity["i18n"];
 };
 export type UniRow = {
   id: string; name: string; country: string; city: string; qs_rank: number | null; majors: string[]; tuition_usd: number; grants: string;
@@ -32,6 +32,7 @@ export const oppFromRow = (r: OppRow): AdminOpportunity => ({
   prepWeeks: r.prep_weeks,
   url: r.url,
   description: r.description,
+  i18n: r.i18n ?? {},
   published: r.published,
 });
 

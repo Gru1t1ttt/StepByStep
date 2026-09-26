@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Logo from "@/components/site/Logo";
 import CatalogAdmin from "./CatalogAdmin";
+import AgentAdmin from "./AgentAdmin";
 import ProgramsAdmin from "./ProgramsAdmin";
 import { Badge, Card, buttonClass, ghostButtonClass } from "@/components/platform/ui";
 import { KIND_LABELS, OUTCOME_LABELS, type KnowledgeDoc, type KnowledgeKind, type Outcome } from "@/lib/rag/types";
@@ -18,7 +19,7 @@ type Stats = {
   approved: Record<KnowledgeKind, number>;
 };
 
-const TABS = ["Возможности", "Вузы", "Программы", "Обзор", "Добавить", "Модерация", "Все документы", "Проверка поиска", "Тест качества"] as const;
+const TABS = ["ИИ-агент", "Возможности", "Вузы", "Программы", "Обзор", "Добавить", "Модерация", "Все документы", "Проверка поиска", "Тест качества"] as const;
 type Tab = (typeof TABS)[number];
 
 const input = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
@@ -128,6 +129,7 @@ export default function AdminPage() {
       {tab === "Возможности" && <CatalogAdmin kind="opportunities" api={api} />}
       {tab === "Вузы" && <CatalogAdmin kind="universities" api={api} />}
       {tab === "Программы" && <ProgramsAdmin api={api} />}
+      {tab === "ИИ-агент" && <AgentAdmin api={api} />}
       {tab === "Обзор" && <Overview stats={stats} busy={busy} run={run} api={api} />}
       {tab === "Добавить" && <AddDoc api={api} onAdded={refresh} />}
       {tab === "Модерация" && <DocList docs={pending} api={api} onChange={refresh} empty="Новых отзывов на модерации нет." />}

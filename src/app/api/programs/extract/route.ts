@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db";
 import { toUsd } from "@/lib/currency";
 import { LLMError, completeJSON } from "@/lib/llm";
+import { fetchHtml, htmlToText, safeUrl } from "@/lib/page-text";
 import { forbidden, isAdmin } from "@/lib/rag/auth";
 import { DEGREES, FIELDS, FORMATS } from "@/lib/world";
 
@@ -8,19 +9,6 @@ import { DEGREES, FIELDS, FORMATS } from "@/lib/world";
 // Ничего не сохраняет — человек проверяет результат и публикует сам.
 
 const MAX_CHARS = 18_000; // ~5 тыс. токенов: влезает в бесплатный лимит Groq
-
-function pageText(html: string) {
-  return html
-    .replace(/<(script|style|noscript|svg|nav|footer|header|form)[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<(br|\/p|\/div|\/li|\/h\d|\/tr)[^>]*>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&[a-z]+;/g, " ")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n\s*\n+/g, "\n")
-    .trim();
-}
 
 const SYSTEM = `Ты извлекаешь данные об учебной программе вуза из текста официальной страницы.
 Верни ТОЛЬКО JSON-объект с ключами:
@@ -75,23 +63,17 @@ export async function POST(req: Request) {
   const { url } = (await req.json()) as { url?: string };
   let target: URL;
   try {
-    target = new URL(url ?? "");
-    if (!/^https?:$/.test(target.protocol) || /^(localhost|127\.|10\.|192\.168\.|169\.254\.)/.test(target.hostname)) throw new Error();
+    target = safeUrl(url);
   } catch {
     return Response.json({ error: "Нужна ссылка на страницу программы (https://…)" }, { status: 400 });
   }
 
   let text = "";
   try {
-    const res = await fetch(target, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; UnilightBot/1.0; +https://unilight.kz)", Accept: "text/html" },
-      signal: AbortSignal.timeout(15_000),
-      redirect: "follow",
-    });
-    if (!res.ok) return Response.json({ error: `Сайт ответил ${res.status}. Скопируй текст страницы вручную.` }, { status: 502 });
-    text = pageText(await res.text()).slice(0, MAX_CHARS);
-  } catch {
-    return Response.json({ error: "Не удалось открыть страницу (сайт не отвечает или блокирует роботов)." }, { status: 502 });
+    text = htmlToText(await fetchHtml(target)).slice(0, MAX_CHARS);
+  } catch (error) {
+    const message = error instanceof Error && error.message.startsWith("Сайт") ? error.message : "Не удалось открыть страницу (сайт не отвечает или блокирует роботов).";
+    return Response.json({ error: message }, { status: 502 });
   }
   if (text.length < 200) return Response.json({ error: "На странице почти нет текста — возможно, она собирается скриптами. Попробуй другую страницу." }, { status: 422 });
 

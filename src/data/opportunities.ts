@@ -27,6 +27,8 @@ export type Opportunity = {
   prepWeeks: number; // за сколько недель стоит начать готовиться
   url: string;
   description: string;
+  // переводы названия и описания (их делает ИИ-агент или админка); без перевода — русский текст
+  i18n?: { kz?: { title: string; description: string }; en?: { title: string; description: string } };
 };
 
 export const OPPORTUNITIES: Opportunity[] = [

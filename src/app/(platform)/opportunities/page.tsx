@@ -7,7 +7,7 @@ import { Check, ExternalLink } from "lucide-react";
 
 import { useState } from "react";
 import type { OpportunityType } from "@/data/opportunities";
-import { daysUntil, formatDate, matchOpportunity } from "@/lib/analysis";
+import { daysUntil, formatDate, matchOpportunity, oppText } from "@/lib/analysis";
 import { INTERESTS } from "@/lib/profile";
 import { toggleIn, updateState } from "@/lib/store";
 import { Badge, Card, PageHeader, WithProfile } from "@/components/platform/ui";
@@ -94,8 +94,8 @@ export default function OpportunitiesPage() {
                         {score}%
                       </span>
                     </div>
-                    <h3 className="mt-3 font-display text-lg font-bold text-slate-950">{o.title}</h3>
-                    <p className="mt-1 text-sm text-slate-600">{o.description}</p>
+                    <h3 className="mt-3 font-display text-lg font-bold text-slate-950">{oppText(o, lang).title}</h3>
+                    <p className="mt-1 text-sm text-slate-600">{oppText(o, lang).description}</p>
                     {reasons.length > 0 && <p className="mt-3 text-sm text-blue-700">{fmt(o_.why, { list: reasons.join(" · ") })}</p>}
                     <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4 text-sm">
                       <span className={days <= 30 ? "font-semibold text-rose-600" : "text-slate-500"}>
